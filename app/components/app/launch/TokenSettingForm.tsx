@@ -59,7 +59,7 @@ export default function TokenSettingForm({
             <div className="relative w-full aspect-square">
               {memeImage && (
                 <img
-                  src={`${import.meta.env.VITE_LIGHTHOUSE_GATEWAY}${memeImage}`}
+                  src={memeImage}
                   alt="Uploaded meme"
                   className="object-contain w-full h-full"
                 />

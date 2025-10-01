@@ -1,6 +1,4 @@
 import { type Dispatch, type SetStateAction, useState } from "react";
-import { toast } from "sonner";
-import lighthouse from "@lighthouse-web3/sdk";
 
 interface MemeImageUploaderProps {
   image: string | null;
@@ -11,66 +9,18 @@ export default function MemeImageUploader({
   image,
   setImage,
 }: MemeImageUploaderProps) {
-  const [loading, setLoading] = useState(false);
-
-  const uploadToLighthouse = async (file: File) => {
-    // Reset any previous state
-    setLoading(true);
-
-    // Dismiss any existing toasts first
-    toast.dismiss();
-
-    // Create a unique ID for this upload toast
-    const uploadingToastId = `uploading-image-${Date.now()}`;
-
-    // Show loading toast
-    toast.loading("Uploading your image...", {
-      id: uploadingToastId,
-      description: "Please wait while we upload your image",
-      duration: 0, // Don't auto-dismiss
-    });
-
-    try {
-      const filesArray = [file];
-      const { data } = await lighthouse.upload(
-        filesArray,
-        import.meta.env.VITE_LIGHTHOUSE_KEY as string,
-      );
-      const uploadedImageUrl = `${data.Hash}`;
-      console.log("Uploading", uploadedImageUrl);
-
-      setImage(uploadedImageUrl);
-
-      // Dismiss loading toast and show success
-      toast.dismiss(uploadingToastId);
-      toast.success("Your image has been uploaded successfully", {
-        description: "Image uploaded",
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error("Error uploading file:", error);
-
-      // Dismiss loading toast and show error
-      toast.dismiss(uploadingToastId);
-      toast.error("There was a problem uploading your image", {
-        description: "Upload failed",
-        duration: 3000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      uploadToLighthouse(e.target.files[0]);
+      const file = e.target.files[0];
+      setImage(URL.createObjectURL(file));
     }
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      uploadToLighthouse(e.dataTransfer.files[0]);
+      const file = e.dataTransfer.files[0];
+      setImage(URL.createObjectURL(file));
     }
   };
 
@@ -81,15 +31,10 @@ export default function MemeImageUploader({
       onDragOver={(e) => e.preventDefault()}
       onClick={() => document.getElementById("file-input")?.click()}
     >
-      {loading ? (
-        <div className="flex flex-col items-center">
-          <div className="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-white"></div>
-          <p className="mt-2 text-gray-400">Uploading...</p>
-        </div>
-      ) : image ? (
+      {image ? (
         <div className="relative w-full h-full flex items-center justify-center">
           <img
-            src={`${import.meta.env.VITE_LIGHTHOUSE_GATEWAY}${image}`}
+            src={image}
             alt="Uploaded meme"
             className="max-h-full max-w-full object-contain"
           />

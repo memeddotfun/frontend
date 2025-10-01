@@ -1,4 +1,4 @@
-import { getApiConfig } from './config';
+import { getApiConfig } from "./config";
 
 /**
  * HTTP API Client for Memed.fun Platform
@@ -51,7 +51,7 @@ class ApiClient {
 
   constructor(baseURL?: string) {
     const config = getApiConfig();
-    
+
     this.baseURL = baseURL || config.baseUrl;
     this.defaultTimeout = config.timeout;
     this.defaultRetries = config.retries;
@@ -62,17 +62,17 @@ class ApiClient {
   // ==========================================
 
   private async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private async fetchWithTimeout(
-    url: string, 
-    config: RequestConfig
+    url: string,
+    config: RequestConfig,
   ): Promise<Response> {
     const { timeout = this.defaultTimeout, ...fetchConfig } = config;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
+
     try {
       const response = await fetch(url, {
         ...fetchConfig,
@@ -92,7 +92,7 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    config: RequestConfig = {}
+    config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     const {
       retries = this.defaultRetries,
@@ -101,10 +101,10 @@ class ApiClient {
     } = config;
 
     const url = `${this.baseURL}${endpoint}`;
-    
+
     // Default headers
     const headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...requestConfig.headers,
     };
 
@@ -121,35 +121,34 @@ class ApiClient {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(
-            errorData.message || 
-            errorData.error || 
-            `HTTP ${response.status}: ${response.statusText}`
+            errorData.message ||
+              errorData.error ||
+              `HTTP ${response.status}: ${response.statusText}`,
           );
         }
 
         const data = await response.json();
-        
+
         // Normalize response format
-        if (data && typeof data === 'object' && 'success' in data) {
+        if (data && typeof data === "object" && "success" in data) {
           return data as ApiResponse<T>;
         }
-        
+
         return {
           data,
           success: true,
         };
-
       } catch (error) {
         lastError = error as Error;
-        
+
         // Don't retry on certain errors
         if (error instanceof Error) {
-          if (error.name === 'AbortError') {
-            throw new Error('Request timeout');
+          if (error.name === "AbortError") {
+            throw new Error("Request timeout");
           }
-          
+
           // Don't retry 4xx errors (client errors)
-          if (error.message.includes('HTTP 4')) {
+          if (error.message.includes("HTTP 4")) {
             throw error;
           }
         }
@@ -168,48 +167,60 @@ class ApiClient {
   // Public HTTP Methods
   // ==========================================
 
-  async get<T>(endpoint: string, config?: RequestConfig): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...config, method: 'GET' });
+  async get<T>(
+    endpoint: string,
+    config?: RequestConfig,
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { ...config, method: "GET" });
   }
 
   async post<T>(
-    endpoint: string, 
-    data?: any, 
-    config?: RequestConfig
+    endpoint: string,
+    data?: any,
+    config?: RequestConfig,
   ): Promise<ApiResponse<T>> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...config,
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      method: "POST",
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+      headers: isFormData ? {} : { "Content-Type": "application/json" },
     });
   }
 
   async put<T>(
-    endpoint: string, 
-    data?: any, 
-    config?: RequestConfig
+    endpoint: string,
+    data?: any,
+    config?: RequestConfig,
   ): Promise<ApiResponse<T>> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...config,
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      method: "PUT",
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+      headers: isFormData ? {} : { "Content-Type": "application/json" },
     });
   }
 
   async patch<T>(
-    endpoint: string, 
-    data?: any, 
-    config?: RequestConfig
+    endpoint: string,
+    data?: any,
+    config?: RequestConfig,
   ): Promise<ApiResponse<T>> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...config,
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      method: "PATCH",
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+      headers: isFormData ? {} : { "Content-Type": "application/json" },
     });
   }
 
-  async delete<T>(endpoint: string, config?: RequestConfig): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...config, method: 'DELETE' });
+  async delete<T>(
+    endpoint: string,
+    config?: RequestConfig,
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { ...config, method: "DELETE" });
   }
 }
 

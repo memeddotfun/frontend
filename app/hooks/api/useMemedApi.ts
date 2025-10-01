@@ -1,46 +1,46 @@
 /**
  * Memed.fun Specific API Hooks
  * Domain-specific API hooks for Memed.fun Platform
- * 
+ *
  * This module provides specialized React hooks for all Memed.fun platform features:
- * 
+ *
  * **Token Operations**:
  *   - Create, fetch, and manage meme tokens
  *   - Bonding curve data and pricing information
  *   - Token analytics and performance metrics
- * 
+ *
  * **Battle System**:
  *   - Create and manage token battles
  *   - Battle analytics and results
  *   - Real-time battle state updates
- * 
+ *
  * **Staking & Rewards**:
  *   - Staking position management
  *   - Reward claiming and distribution
  *   - Staking analytics and APY calculations
- * 
+ *
  * **Lens Protocol Integration**:
  *   - Social engagement metrics
  *   - Lens post interaction tracking
  *   - Social influence scoring
- * 
+ *
  * **Analytics & Leaderboards**:
  *   - Platform-wide statistics
  *   - User and token leaderboards
  *   - Performance analytics
- * 
+ *
  * All hooks are built on top of the generic useApi system, providing:
  * - Type safety with Memed.fun specific interfaces
  * - Automatic caching and error handling
  * - Optimistic updates for better UX
  * - Request deduplication and cancellation
- * 
+ *
  * @example Token Operations:
  * ```tsx
  * const { data: tokens } = useMemeTokens();
  * const { mutate: createToken } = useCreateMemeToken();
  * ```
- * 
+ *
  * @example Battle System:
  * ```tsx
  * const { data: battles } = useTokenBattles();
@@ -49,22 +49,13 @@
  */
 
 import { useApi, useApiMutation, type UseApiOptions } from "../useApi";
+import { API_ENDPOINTS } from "@/lib/api/config";
 
 // Types for Memed.fun API responses
 export interface MemeToken {
-  id: string;
   name: string;
-  symbol: string;
+  ticker: string;
   description: string;
-  imageUrl: string;
-  creatorAddress: string;
-  totalSupply: string;
-  currentPrice: string;
-  marketCap: string;
-  holders: number;
-  createdAt: string;
-  lensPostId?: string;
-  engagementScore: number;
 }
 
 export interface TokenBattle {
@@ -135,16 +126,7 @@ export function useMemeToken(tokenId: string, options?: UseApiOptions) {
 }
 
 export function useCreateMemeToken() {
-  return useApiMutation<
-    MemeToken,
-    {
-      name: string;
-      symbol: string;
-      description: string;
-      imageFile: File;
-      lensPostId?: string;
-    }
-  >("/tokens/create");
+  return useApiMutation<MemeToken, FormData>(API_ENDPOINTS.CREATE_TOKEN);
 }
 
 // Bonding Curve Hooks
@@ -192,7 +174,7 @@ export function useCreateBattle() {
 // Staking Hooks
 export function useStakingPositions(
   userAddress?: string,
-  options?: UseApiOptions
+  options?: UseApiOptions,
 ) {
   return useApi<StakingPosition[]>(
     `/staking/positions${userAddress ? `?user=${userAddress}` : ""}`,
@@ -202,7 +184,7 @@ export function useStakingPositions(
       immediate: !!userAddress,
       deps: [userAddress],
       ...options,
-    }
+    },
   );
 }
 
@@ -239,7 +221,7 @@ export function useUpdateLensEngagement() {
 export function useTokenAnalytics(
   tokenId: string,
   timeframe: "1h" | "24h" | "7d" | "30d" = "24h",
-  options?: UseApiOptions
+  options?: UseApiOptions,
 ) {
   return useApi<{
     priceChange: string;
@@ -299,7 +281,7 @@ export function useUserProfile(address: string, options?: UseApiOptions) {
 // Leaderboard Hooks
 export function useLeaderboard(
   type: "creators" | "holders" | "battlers" = "creators",
-  options?: UseApiOptions
+  options?: UseApiOptions,
 ) {
   return useApi<
     Array<{

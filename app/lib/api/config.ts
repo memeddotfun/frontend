@@ -90,7 +90,7 @@ export const API_ENDPOINTS = {
   // Tokens
   TOKENS: "/tokens",
   TOKEN_DETAIL: "/meme/:memeId",
-  TOKEN_CREATE: "/tokens/create",
+  CREATE_TOKEN: "/create-token",
   TOKEN_BUY: "/tokens/buy",
   TOKEN_SELL: "/tokens/sell",
   BONDING_CURVE: "/tokens/:id/bonding-curve",
@@ -120,6 +120,10 @@ export const API_ENDPOINTS = {
   // Upload
   UPLOAD_IMAGE: "/upload/image",
   UPLOAD_METADATA: "/upload/metadata",
+
+  // Auth
+  CREATE_NONCE: "/create-nonce",
+  CONNECT_WALLET: "/connect-wallet",
 } as const;
 
 /**
