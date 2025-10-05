@@ -114,6 +114,7 @@ export const API_ENDPOINTS = {
   PLATFORM_STATS: "/analytics/platform",
 
   // User
+  GET_USER: "/user",
   USER_PROFILE: "/users/:address",
   LEADERBOARD: "/leaderboard/:type",
 

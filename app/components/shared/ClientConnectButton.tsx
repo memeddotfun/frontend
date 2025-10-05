@@ -4,25 +4,25 @@ import { useEffect, useState } from "react";
 import { ConnectKitButton } from "connectkit";
 import { useAccount, useSignMessage } from "wagmi";
 import { useCreateNonce, useConnectWallet } from "../../hooks/api/useAuth";
+import { useAuthStore } from "@/store/auth";
 
 export function ClientConnectButton() {
   const [mounted, setMounted] = useState(false);
   const { address, isConnected } = useAccount();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
 
-  // State to hold the nonce
+  // State to hold the nonce for the signing process
   const [nonce, setNonce] = useState<string | null>(null);
 
   // API Hooks
   const {
     mutate: createNonce,
     data: nonceData,
-    loading: nonceLoading,
     error: nonceError,
   } = useCreateNonce();
   const {
     mutate: connectWallet,
     data: authData,
-    loading: authLoading,
     error: authError,
   } = useConnectWallet();
 
@@ -45,32 +45,50 @@ export function ClientConnectButton() {
     setMounted(true);
   }, []);
 
-  // 1. Get nonce when wallet connects
+  // 1. Trigger sign-in flow if wallet is connected but user is not authenticated
   useEffect(() => {
-    if (isConnected && address && !nonce) {
+    // Only run if wallet is connected, initial auth check is done, and user is not authenticated
+    if (
+      isConnected &&
+      address &&
+      !isAuthLoading &&
+      !isAuthenticated &&
+      !nonce
+    ) {
       console.log(
-        `Wallet connected with address: ${address}. Creating nonce...`,
+        `Wallet connected, but no session found. Starting sign-in flow for ${address}...`,
       );
       createNonce({ address });
     }
-  }, [isConnected, address, createNonce, nonce]);
+  }, [
+    isConnected,
+    address,
+    isAuthLoading,
+    isAuthenticated,
+    createNonce,
+    nonce,
+  ]);
 
   // 2. Store nonce and sign message when nonce is received
   useEffect(() => {
     if (nonceData?.nonce) {
-      console.log("Nonce received:", nonceData.nonce);
-      setNonce(nonceData.nonce);
+      const actualNonce = nonceData.nonce;
+      console.log("Nonce received:", actualNonce);
+      setNonce(actualNonce);
       console.log("Signing message with nonce...");
-      signMessage({ message: nonceData.nonce });
+      signMessage({ message: actualNonce });
     }
   }, [nonceData, signMessage]);
 
-  // 3. Handle successful authentication
+  // 3. Handle successful authentication by re-verifying the session
   useEffect(() => {
-    if (authData) {
-      console.log("Authentication successful:", authData);
-      // Here you would typically store the JWT token and user data in a global state (e.g., Zustand, Context)
-      // For example: localStorage.setItem('authToken', authData.token);
+    if (authData?.message) {
+      console.log(
+        "Authentication successful. Re-verifying session to fetch user data.",
+      );
+      // After the /connect-wallet call succeeds, we trigger a session verification
+      // which will fetch the user data from /user and update the global state.
+      useAuthStore.getState().verifySession();
     }
   }, [authData]);
 

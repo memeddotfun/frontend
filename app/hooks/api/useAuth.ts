@@ -25,8 +25,7 @@ export interface User {
 }
 
 export interface ConnectWalletResponse {
-  user: User;
-  token: string; // JWT or session token
+  message: string;
 }
 
 /**
