@@ -70,7 +70,7 @@ export interface ConnectSocialResponse {
 export function useCreateNonce() {
   return useApiMutation<NonceResponse, NonceRequest>(
     API_ENDPOINTS.CREATE_NONCE,
-    { method: "POST" },
+    { method: "POST", retries: 0 },
   );
 }
 

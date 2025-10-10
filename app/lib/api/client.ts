@@ -183,6 +183,7 @@ class ApiClient {
     }
 
     return this.request<T>(endpoint, {
+      retries: 0, // Default to 0 retries for POST
       ...config,
       method: "POST",
       body: isFormData ? data : data ? JSON.stringify(data) : undefined,
@@ -205,6 +206,7 @@ class ApiClient {
     }
 
     return this.request<T>(endpoint, {
+      retries: 0, // Default to 0 retries for PUT
       ...config,
       method: "PUT",
       body: isFormData ? data : data ? JSON.stringify(data) : undefined,
@@ -227,6 +229,7 @@ class ApiClient {
     }
 
     return this.request<T>(endpoint, {
+      retries: 0, // Default to 0 retries for PATCH
       ...config,
       method: "PATCH",
       body: isFormData ? data : data ? JSON.stringify(data) : undefined,
