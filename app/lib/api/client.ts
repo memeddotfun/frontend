@@ -102,12 +102,6 @@ class ApiClient {
 
     const url = `${this.baseURL}${endpoint}`;
 
-    // Default headers
-    const headers = {
-      "Content-Type": "application/json",
-      ...requestConfig.headers,
-    };
-
     let lastError: Error;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -115,7 +109,6 @@ class ApiClient {
         const response = await this.fetchWithTimeout(url, {
           credentials: "include", // Default credentials
           ...requestConfig,
-          headers,
         });
 
         // Handle HTTP errors
@@ -178,42 +171,66 @@ class ApiClient {
   async post<T>(
     endpoint: string,
     data?: any,
-    config?: RequestConfig,
+    config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     const isFormData = data instanceof FormData;
+    const headers = new Headers(config.headers);
+
+    if (isFormData) {
+      headers.delete("Content-Type"); // Let the browser set it
+    } else {
+      headers.set("Content-Type", "application/json");
+    }
+
     return this.request<T>(endpoint, {
       ...config,
       method: "POST",
       body: isFormData ? data : data ? JSON.stringify(data) : undefined,
-      headers: isFormData ? {} : { "Content-Type": "application/json" },
+      headers: headers,
     });
   }
 
   async put<T>(
     endpoint: string,
     data?: any,
-    config?: RequestConfig,
+    config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     const isFormData = data instanceof FormData;
+    const headers = new Headers(config.headers);
+
+    if (isFormData) {
+      headers.delete("Content-Type");
+    } else {
+      headers.set("Content-Type", "application/json");
+    }
+
     return this.request<T>(endpoint, {
       ...config,
       method: "PUT",
       body: isFormData ? data : data ? JSON.stringify(data) : undefined,
-      headers: isFormData ? {} : { "Content-Type": "application/json" },
+      headers: headers,
     });
   }
 
   async patch<T>(
     endpoint: string,
     data?: any,
-    config?: RequestConfig,
+    config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     const isFormData = data instanceof FormData;
+    const headers = new Headers(config.headers);
+
+    if (isFormData) {
+      headers.delete("Content-Type");
+    } else {
+      headers.set("Content-Type", "application/json");
+    }
+
     return this.request<T>(endpoint, {
       ...config,
       method: "PATCH",
       body: isFormData ? data : data ? JSON.stringify(data) : undefined,
-      headers: isFormData ? {} : { "Content-Type": "application/json" },
+      headers: headers,
     });
   }
 

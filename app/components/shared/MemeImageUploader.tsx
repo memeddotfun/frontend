@@ -64,7 +64,7 @@ export default function MemeImageUploader({
       <input
         id="file-input"
         type="file"
-        accept="image/png, image/jpeg, image/gif"
+        accept="image/png, image/jpeg, image/gif, image/webp"
         className="hidden"
         onChange={handleFileChange}
       />

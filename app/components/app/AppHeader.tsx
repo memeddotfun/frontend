@@ -149,7 +149,7 @@ export function AppHeader({ onMenuToggle }: AppHeaderProps) {
           <button className="text-gray-400 hover:text-white transition-colors border border-neutral-700 p-2  cursor-pointer rounded-lg">
             <Bell className="w-5 h-5" />
           </button>
-
+          {/*user detail*/}
           <div className="hidden md:flex items-center gap-3  h-11 bg-[#1a1a1a] border border-neutral-700 rounded-lg px-3 py-2  transition-colors cursor-pointer shadow-[inset_0_0_15px_rgba(0,0,0,0.3)]">
             <div className="w-8 h-8 bg-stone-600 rounded-lg flex items-center justify-center">
               <User className="w-4 h-4 text-white" />

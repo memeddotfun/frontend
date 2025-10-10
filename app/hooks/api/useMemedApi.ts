@@ -125,10 +125,6 @@ export function useMemeToken(tokenId: string, options?: UseApiOptions) {
   });
 }
 
-export function useCreateMemeToken() {
-  return useApiMutation<MemeToken, FormData>(API_ENDPOINTS.CREATE_TOKEN);
-}
-
 // Bonding Curve Hooks
 export function useBondingCurve(tokenId: string, options?: UseApiOptions) {
   return useApi<BondingCurveData>(`/tokens/${tokenId}/bonding-curve`, {

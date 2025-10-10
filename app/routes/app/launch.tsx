@@ -5,29 +5,32 @@ import { useAccount, useSignMessage } from "wagmi";
 import ConnectProfile from "../../components/app/launch/ConnectProfile";
 import CreateMemeForm from "@/components/app/launch/CreateMemeForm";
 import TokenSettingForm from "../../components/app/launch/TokenSettingForm";
-import { useCreateMemeToken } from "@/hooks/api/useMemedApi";
+import { apiClient } from "@/lib/api/client";
+import { API_ENDPOINTS } from "@/lib/api/config";
 import { Share2Icon } from "lucide-react";
 import { Link } from "react-router";
 import { useCreateNonce } from "@/hooks/api/useAuth";
 
 export default function LaunchPage() {
   const { address } = useAccount();
-  const {
-    mutate: createToken,
-    loading: isMinting,
-    error,
-    data: createdToken,
-  } = useCreateMemeToken();
   const { mutate: createNonce } = useCreateNonce();
   const { signMessageAsync } = useSignMessage();
 
-  const [memeImage, setMemeImage] = useState<string | null>(null);
+  // State for the multi-step form
   const [step, setStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // State for meme data
+  const [memeImage, setMemeImage] = useState<string | null>(null);
   const [memeTitle, setMemeTitle] = useState<string>("");
   const [memeDescription, setMemeDescription] = useState<string>("");
   const [memeSymbol, setMemeSymbol] = useState<string>("");
+
+  // Manual state for minting process
   const [isSigning, setIsSigning] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [createdToken, setCreatedToken] = useState<any | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -56,19 +59,22 @@ export default function LaunchPage() {
     }
 
     try {
+      // 1. Set signing state
       setIsSigning(true);
-      // 1. Get nonce
       const nonceResponse = await createNonce({ address });
       if (!nonceResponse?.nonce) {
         throw new Error("Failed to retrieve nonce for signing.");
       }
-      const message = nonceResponse.nonce;
+      const nonce = nonceResponse.nonce;
 
       // 2. Sign the nonce to get a signature
-      const signature = await signMessageAsync({ message });
+      const signature = await signMessageAsync({ message: nonce });
       setIsSigning(false);
 
-      // 3. Prepare form data
+      // 3. Set minting state
+      setIsMinting(true);
+
+      // 4. Prepare form data and headers
       const response = await fetch(memeImage);
       const blob = await response.blob();
       const imageFile = new File([blob], "meme-image.png", { type: blob.type });
@@ -77,22 +83,32 @@ export default function LaunchPage() {
         name: memeTitle,
         ticker: memeSymbol,
         description: memeDescription,
-        message,
-        signature,
       };
 
       const formData = new FormData();
       formData.append("data", JSON.stringify(textData));
       formData.append("image", imageFile);
 
-      // 4. Call the create token endpoint
-      await createToken(formData);
+      const headers = {
+        Nonce: JSON.stringify({ message: nonce, signature }),
+      };
+
+      // 5. Call the API directly using apiClient
+      const result = await apiClient.post(
+        API_ENDPOINTS.CREATE_TOKEN,
+        formData,
+        { headers },
+      );
+
+      setCreatedToken(result.data);
     } catch (e) {
+      const error = e as Error;
+      setError(error);
+      console.error("Minting error:", error);
+      toast.error(error.message || "An unexpected error occurred.");
+    } finally {
       setIsSigning(false);
-      console.error("Minting error:", e);
-      const errorMessage =
-        e instanceof Error ? e.message : "An unexpected error occurred.";
-      toast.error(errorMessage);
+      setIsMinting(false);
     }
   };
 
@@ -108,9 +124,7 @@ export default function LaunchPage() {
   useEffect(() => {
     if (error) {
       console.error("Minting error:", error);
-      toast.error(
-        error.message || "Failed to mint meme coins. Please try again.",
-      );
+      // Toast is already shown in handleMint, but you could add more handling here
     }
   }, [error]);
 
