@@ -64,6 +64,9 @@ import type { LoaderFunctionArgs } from "react-router";
 import { apiClient, type ApiResponse } from "./client";
 import { API_ENDPOINTS } from "./config";
 
+import { redirect } from "react-router";
+import type { GetUserResponse } from "@/store/auth";
+
 export interface LoaderData<T = any> {
   data: T | null;
   error: string | null;
@@ -102,7 +105,13 @@ export function createApiLoader<T>(
         finalEndpoint += `?${searchParams.toString()}`;
       }
 
-      const response = await apiClient.get<T>(finalEndpoint);
+      const cookie = request.headers.get("Cookie");
+      const headers: HeadersInit = {};
+      if (cookie) {
+        headers["Cookie"] = cookie;
+      }
+
+      const response = await apiClient.get<T>(finalEndpoint, { headers });
 
       let finalData = response.data;
 
@@ -169,7 +178,13 @@ export function createParallelLoader<T extends Record<string, any>>(
               endpoint += `?${searchParams.toString()}`;
             }
 
-            const response = await apiClient.get(endpoint);
+            const cookie = request.headers.get("Cookie");
+            const headers: HeadersInit = {};
+            if (cookie) {
+              headers["Cookie"] = cookie;
+            }
+
+            const response = await apiClient.get(endpoint, { headers });
             data = response.data;
           } else {
             // It's a function
@@ -221,6 +236,46 @@ export const platformStatsLoader = createApiLoader("/analytics/platform", {
   },
 });
 
+/**
+ * Authentication loader to protect routes.
+ * Redirects to the home page if the user is not authenticated.
+ */
+export const authLoader = async ({
+  request,
+}: LoaderFunctionArgs): Promise<Response> => {
+  try {
+    const cookie = request.headers.get("Cookie");
+    console.log("🍪 Cookie from request:", cookie); // Debug
+
+    const headers: HeadersInit = {};
+    if (cookie) {
+      headers["Cookie"] = cookie;
+    }
+
+    console.log("📤 Sending headers:", headers); // Debug
+
+    const response = await apiClient.get<GetUserResponse>(
+      API_ENDPOINTS.GET_USER,
+      { headers },
+    );
+
+    console.log("📥 Response:", response); // Debug
+
+    if (!response.data.user) {
+      console.log("No user found");
+      throw redirect("/login");
+    }
+
+    return Response.json({
+      data: response.data,
+      error: null,
+      success: true,
+    } satisfies LoaderData<GetUserResponse>);
+  } catch (error) {
+    console.error("❌ Auth loader error:", error);
+    throw redirect("/login");
+  }
+};
 /*
 These loaders are used if you want to fetch  from multiple endpoint
  */

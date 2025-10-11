@@ -97,7 +97,7 @@ export default function LaunchPage() {
       const result = await apiClient.post(
         API_ENDPOINTS.CREATE_TOKEN,
         formData,
-        { headers, timeout: 60000, retries: 0 }, // 60s timeout, no retries
+        { headers }, // 60s timeout, no retries
       );
 
       setCreatedToken(result.data);

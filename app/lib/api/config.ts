@@ -88,44 +88,45 @@ export function getApiConfig(): ApiConfig {
  */
 export const API_ENDPOINTS = {
   // Tokens
-  TOKENS: "/tokens",
-  TOKEN_DETAIL: "/meme/:memeId",
-  CREATE_TOKEN: "/create-token",
-  TOKEN_BUY: "/tokens/buy",
-  TOKEN_SELL: "/tokens/sell",
-  BONDING_CURVE: "/tokens/:id/bonding-curve",
+  TOKENS: "/api/tokens",
+  TOKEN_DETAIL: "/api/meme/:memeId",
+  CREATE_TOKEN: "/api/create-token",
+  TOKEN_BUY: "/api/tokens/buy",
+  TOKEN_SELL: "/api/tokens/sell",
+  BONDING_CURVE: "/api/tokens/:id/bonding-curve",
 
   // Battles
-  BATTLES: "/battles",
-  BATTLE_DETAIL: "/battles/:id",
-  BATTLE_CREATE: "/battles/create",
-  BATTLE_STAKE: "/battles/stake",
+  BATTLES: "/api/battles",
+  BATTLE_DETAIL: "/api/battles/:id",
+  BATTLE_CREATE: "/api/battles/create",
+  BATTLE_STAKE: "/api/battles/stake",
 
   // Staking
-  STAKING_POSITIONS: "/staking/positions",
-  STAKING_CLAIM: "/staking/claim",
+  STAKING_POSITIONS: "/api/staking/positions",
+  STAKING_CLAIM: "/api/staking/claim",
 
   // Lens Integration
-  LENS_ENGAGEMENT: "/lens/engagement/:postId",
-  LENS_UPDATE: "/lens/engagement/update",
+  LENS_ENGAGEMENT: "/api/lens/engagement/:postId",
+  LENS_UPDATE: "/api/lens/engagement/update",
 
   // Analytics
-  TOKEN_ANALYTICS: "/analytics/token/:id",
-  PLATFORM_STATS: "/analytics/platform",
+  TOKEN_ANALYTICS: "/api/analytics/token/:id",
+  PLATFORM_STATS: "/api/analytics/platform",
 
   // User
-  GET_USER: "/user",
-  USER_PROFILE: "/users/:address",
-  LEADERBOARD: "/leaderboard/:type",
+  GET_USER: "/api/user",
+  USER_PROFILE: "/api/users/:address",
+  LEADERBOARD: "/api/leaderboard/:type",
 
   // Upload
-  UPLOAD_IMAGE: "/upload/image",
-  UPLOAD_METADATA: "/upload/metadata",
+  UPLOAD_IMAGE: "/api/upload/image",
+  UPLOAD_METADATA: "/api/upload/metadata",
 
   // Auth
-  CREATE_NONCE: "/create-nonce",
-  CONNECT_WALLET: "/connect-wallet",
-  CONNECT_SOCIAL: "/connect-social",
+  CREATE_NONCE: "/api/create-nonce",
+  CONNECT_WALLET: "/api/connect-wallet",
+  CONNECT_SOCIAL: "/api/connect-social",
+  DISCONNECT_WALLET: "/api/disconnect-wallet",
 } as const;
 
 /**

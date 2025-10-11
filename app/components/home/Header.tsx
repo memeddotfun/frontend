@@ -13,7 +13,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
     { label: "About", href: "/about" },
     // { label: "Explore", href: "/app/explore" },
     { label: "Contact", href: "/contact" },
-    { label: "Launch App", href: "/app" },
+    { label: "Launch App", href: "/explore" },
   ];
 
   return (

@@ -2,17 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { ConnectKitButton } from "connectkit";
-import { useAccount, useSignMessage } from "wagmi";
-import { useCreateNonce, useConnectWallet } from "../../hooks/api/useAuth";
+import { useAccount, useSignMessage, useDisconnect } from "wagmi";
+import {
+  useCreateNonce,
+  useConnectWallet,
+  useDisconnectWallet,
+} from "../../hooks/api/useAuth";
 import { useAuthStore } from "@/store/auth";
+import { UserDetail } from "./UserDetail";
+import { useNavigate } from "react-router";
 
 export function ClientConnectButton() {
   const [mounted, setMounted] = useState(false);
+  const [signInStatus, setSignInStatus] = useState("idle"); // 'idle', 'getting_nonce', 'signing', 'connecting'
+
   const { address, isConnected } = useAccount();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
-
-  // State to hold the nonce for the signing process
-  const [nonce, setNonce] = useState<string | null>(null);
+  const { disconnect } = useDisconnect();
+  const navigate = useNavigate();
 
   // API Hooks
   const {
@@ -25,86 +32,118 @@ export function ClientConnectButton() {
     data: authData,
     error: authError,
   } = useConnectWallet();
+  const { mutate: disconnectWallet, loading: isDisconnecting } =
+    useDisconnectWallet({
+      onSuccess: () => {
+        console.log("Backend logout successful. Clearing client state.");
+        useAuthStore.getState().clearAuth();
+        disconnect();
+        navigate("/");
+      },
+      onError: (error: Error) => {
+        console.error("Backend logout failed:", error);
+        useAuthStore.getState().clearAuth();
+        disconnect();
+        navigate("/");
+      },
+    });
 
   // Wagmi hook to sign a message
-  const { signMessage } = useSignMessage({
-    mutation: {
-      onSuccess(signature) {
-        if (address && nonce) {
-          console.log("Message signed successfully. Connecting wallet...");
-          connectWallet({ address, signature, message: nonce });
-        }
-      },
-      onError(error) {
-        console.error("Failed to sign message:", error);
-      },
-    },
-  });
+  const { signMessage } = useSignMessage();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 1. Trigger sign-in flow if wallet is connected but user is not authenticated
+  // 1. Trigger sign-in flow when wallet connects and user is not authenticated
   useEffect(() => {
-    // Only run if wallet is connected, initial auth check is done, and user is not authenticated
     if (
       isConnected &&
       address &&
-      !isAuthLoading &&
       !isAuthenticated &&
-      !nonce
+      !isAuthLoading &&
+      signInStatus === "idle"
     ) {
-      console.log(
-        `Wallet connected, but no session found. Starting sign-in flow for ${address}...`,
-      );
+      console.log("Wallet connected, starting sign-in flow...");
+      setSignInStatus("getting_nonce");
       createNonce({ address });
     }
   }, [
     isConnected,
     address,
-    isAuthLoading,
     isAuthenticated,
+    isAuthLoading,
+    signInStatus,
     createNonce,
-    nonce,
   ]);
 
-  // 2. Store nonce and sign message when nonce is received
+  // 2. Sign message when nonce is received
   useEffect(() => {
-    if (nonceData?.nonce) {
-      const actualNonce = nonceData.nonce;
-      console.log("Nonce received:", actualNonce);
-      setNonce(actualNonce);
-      console.log("Signing message with nonce...");
-      signMessage({ message: actualNonce });
+    if (nonceData?.nonce && signInStatus === "getting_nonce") {
+      console.log("Nonce received, prompting for signature...");
+      setSignInStatus("signing");
+      signMessage(
+        { message: nonceData.nonce },
+        {
+          onSuccess: (signature) => {
+            console.log("Message signed, connecting to backend...");
+            setSignInStatus("connecting");
+            if (address) {
+              connectWallet({ address, signature, message: nonceData.nonce });
+            }
+          },
+          onError: (error: Error) => {
+            console.error("Failed to sign message:", error);
+            setSignInStatus("idle"); // Reset on error
+          },
+        },
+      );
     }
-  }, [nonceData, signMessage]);
+  }, [nonceData, signInStatus, signMessage, address, connectWallet]);
 
   // 3. Handle successful authentication by re-verifying the session
   useEffect(() => {
-    if (authData?.message) {
-      console.log(
-        "Authentication successful. Re-verifying session to fetch user data.",
-        authData?.message,
-      );
-      // After the /connect-wallet call succeeds, we trigger a session verification
-      // which will fetch the user data from /user and update the global state.
+    if (authData?.message && signInStatus === "connecting") {
+      console.log("Backend connection successful. Verifying session...");
       useAuthStore.getState().verifySession();
+      setSignInStatus("idle"); // Reset after successful authentication
     }
-  }, [authData]);
+  }, [authData, signInStatus]);
 
-  // Error handling
+  // 4. Reset flow if wallet disconnects
   useEffect(() => {
-    if (nonceError) {
-      console.error("Failed to create nonce:", nonceError);
+    if (!isConnected) {
+      setSignInStatus("idle");
     }
-    if (authError) {
-      console.error("Failed to connect wallet:", authError);
+  }, [isConnected]);
+
+  // 5. Global error handling
+  useEffect(() => {
+    if (nonceError || authError) {
+      console.error(
+        "An error occurred during the auth flow:",
+        nonceError || authError,
+      );
+      // setSignInStatus("idle"); // Do not reset to idle, to prevent infinite loop on error
     }
   }, [nonceError, authError]);
 
-  if (!mounted) {
-    return <div className="h-10 w-32 bg-gray-800 rounded-lg animate-pulse" />;
+  const handleDisconnect = () => {
+    console.log("Initiating disconnect...");
+    disconnectWallet();
+  };
+
+  if (!mounted || isAuthLoading) {
+    return <div className="h-10 w-48 bg-gray-800 rounded-lg animate-pulse" />;
+  }
+
+  if (isAuthenticated) {
+    return (
+      <UserDetail
+        onDisconnect={handleDisconnect}
+        isDisconnecting={isDisconnecting}
+      />
+    );
   }
 
   return <ConnectKitButton />;

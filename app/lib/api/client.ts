@@ -97,6 +97,7 @@ class ApiClient {
     const {
       retries = this.defaultRetries,
       retryDelay = this.defaultRetryDelay,
+      headers,
       ...requestConfig
     } = config;
 
@@ -109,6 +110,10 @@ class ApiClient {
         const response = await this.fetchWithTimeout(url, {
           credentials: "include", // Default credentials
           ...requestConfig,
+          headers: {
+            // Merge headers properly
+            ...(headers || {}),
+          },
         });
 
         // Handle HTTP errors
@@ -165,7 +170,11 @@ class ApiClient {
     endpoint: string,
     config?: RequestConfig,
   ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...config, method: "GET" });
+    return this.request<T>(endpoint, {
+      ...config,
+      method: "GET",
+      headers: config?.headers,
+    });
   }
 
   async post<T>(

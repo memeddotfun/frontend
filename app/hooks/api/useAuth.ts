@@ -63,6 +63,8 @@ export interface ConnectSocialResponse {
   message: string;
 }
 
+const CREATE_NONCE_OPTIONS = { method: "POST", retries: 0 };
+
 /**
  * Hook to create a nonce for authentication
  * @returns Mutation object with mutate function, loading state, and error handling
@@ -70,9 +72,11 @@ export interface ConnectSocialResponse {
 export function useCreateNonce() {
   return useApiMutation<NonceResponse, NonceRequest>(
     API_ENDPOINTS.CREATE_NONCE,
-    { method: "POST", retries: 0 },
+    CREATE_NONCE_OPTIONS,
   );
 }
+
+const CONNECT_WALLET_OPTIONS = { method: "POST" };
 
 /**
  * Hook to connect wallet and verify signature
@@ -81,9 +85,11 @@ export function useCreateNonce() {
 export function useConnectWallet() {
   return useApiMutation<ConnectWalletResponse, ConnectWalletRequest>(
     API_ENDPOINTS.CONNECT_WALLET,
-    { method: "POST" },
+    CONNECT_WALLET_OPTIONS,
   );
 }
+
+const CONNECT_SOCIAL_OPTIONS = { method: "POST" };
 
 /**
  * Hook to connect a social account (Lens or Twitter)
@@ -92,6 +98,21 @@ export function useConnectWallet() {
 export function useConnectSocial() {
   return useApiMutation<ConnectSocialResponse, ConnectSocialRequest>(
     API_ENDPOINTS.CONNECT_SOCIAL,
-    { method: "POST" },
+    CONNECT_SOCIAL_OPTIONS,
+  );
+}
+
+const DISCONNECT_WALLET_OPTIONS = { method: "POST" };
+
+/**
+ * Hook to disconnect wallet and log out from the backend
+ * @returns Mutation object with mutate function, loading state, and error handling
+ */
+export function useDisconnectWallet(
+  options: Omit<UseApiOptions, "immediate" | "deps"> = {},
+) {
+  return useApiMutation<{ message: string }, void>(
+    API_ENDPOINTS.DISCONNECT_WALLET,
+    { ...DISCONNECT_WALLET_OPTIONS, ...options },
   );
 }
