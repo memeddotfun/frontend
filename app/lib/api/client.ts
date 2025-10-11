@@ -97,7 +97,7 @@ class ApiClient {
     const {
       retries = this.defaultRetries,
       retryDelay = this.defaultRetryDelay,
-      headers,
+      // headers,
       ...requestConfig
     } = config;
 
@@ -110,10 +110,10 @@ class ApiClient {
         const response = await this.fetchWithTimeout(url, {
           credentials: "include", // Default credentials
           ...requestConfig,
-          headers: {
-            // Merge headers properly
-            ...(headers || {}),
-          },
+          // headers: {
+          //   // Merge headers properly
+          //   ...(headers || {}),
+          // },
         });
 
         // Handle HTTP errors
