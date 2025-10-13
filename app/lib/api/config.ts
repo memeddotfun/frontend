@@ -89,7 +89,7 @@ export function getApiConfig(): ApiConfig {
 export const API_ENDPOINTS = {
   // Tokens
   TOKENS: "/api/tokens",
-  TOKEN_DETAIL: "/api/meme/:memeId",
+  TOKEN_DETAIL: "/api/token/:memeId",
   CREATE_TOKEN: "/api/create-token",
   TOKEN_BUY: "/api/tokens/buy",
   TOKEN_SELL: "/api/tokens/sell",

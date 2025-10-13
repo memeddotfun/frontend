@@ -1,7 +1,7 @@
 import { MemeTokenCard } from "./MemeTokenCard";
 
 interface MemeToken {
-  id: number;
+  id: string;
   name: string;
   creator: string;
   price: number;

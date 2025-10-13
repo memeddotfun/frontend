@@ -6,34 +6,65 @@ import CountdownTimer from "@/components/app/meme/CountdownTimer";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import TradeForm from "@/components/app/meme/TradeForm";
-import StakeForm from "@/components/app/meme/StakeForm";
-import UnstakeForm from "@/components/app/meme/UnstakeForm";
 import BattleHistory from "@/components/app/meme/BattleHistory";
 import ActiveBattles from "@/components/app/meme/ActiveBattles";
 import { ChevronLeft, Sword } from "lucide-react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useLoaderData } from "react-router";
+import { memeTokenDetailLoader, type LoaderData } from "@/lib/api/loaders";
+import type { Token } from "@/hooks/api/useAuth";
 
-// export const loader = tokenDetailLoader;
+// Export the loader for this route
+export { memeTokenDetailLoader as loader };
 
 export default function Meme() {
-  // const { token, bondingCurve, analytics, battles } = useLoaderData() as any;
-  // console.log(token);
+  const { data: token, error } = useLoaderData() as LoaderData<Token>;
   const navigate = useNavigate();
   const { memeId } = useParams();
   const [active, setActive] = useState<boolean>(true);
+  console.log(token);
+  const handleBack = () => navigate(-1);
+  if (error) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center text-white">
+        <p className="text-red-500 text-lg mb-4">Error: {error}</p>
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-neutral-400 hover:text-white cursor-pointer"
+        >
+          <ChevronLeft size={14} />
+          Back
+        </button>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center text-white">
+        <p className="text-lg mb-4">Token not found.</p>
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-neutral-400 hover:text-white cursor-pointer"
+        >
+          <ChevronLeft size={14} />
+          Back
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full">
       <div className="px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 lg:space-y-8 w-full">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="flex items-center gap-2 text-neutral-500 cursor-pointer "
         >
-          {" "}
           <ChevronLeft size={14} />
           Back
         </button>
         {/* Top Hero Card */}
-        <MemeIntroCard />
+        <MemeIntroCard token={token} />
 
         {/* Social + Launch + Commit Layout */}
         <div className="flex flex-col xl:flex-row gap-4 md:gap-6 xl:gap-8 w-full">

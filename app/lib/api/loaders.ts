@@ -210,19 +210,22 @@ export function createParallelLoader<T extends Record<string, any>>(
 These loaders are used if you want to fetch only from one endpoint
  */
 // Specific loaders for Memed.fun routes
-export const memeTokensLoader = createApiLoader("/tokens", {
+export const memeTokensLoader = createApiLoader(API_ENDPOINTS.TOKENS, {
   fallback: [],
-  transform: (data) => data || [],
+  transform: (data) => data.tokens || [],
 });
-
-export const memeTokenLoader = createApiLoader<any>("/tokens/:tokenId");
 
 export const tokenBattlesLoader = createApiLoader("/battles", {
   fallback: [],
   transform: (data) => data || [],
 });
 
-export const tokenBattleLoader = createApiLoader<any>("/battles/:battleId");
+export const memeTokenDetailLoader = createApiLoader(
+  API_ENDPOINTS.TOKEN_DETAIL,
+  {
+    transform: (data) => data.token || null,
+  },
+);
 
 export const userProfileLoader = createApiLoader<any>("/users/:address");
 

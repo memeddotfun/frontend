@@ -1,4 +1,4 @@
-import { useApiMutation } from "../useApi";
+import { useApiMutation, type UseApiOptions } from "../useApi";
 import { API_ENDPOINTS } from "../../lib/api/config";
 
 // Types for Auth API responses
@@ -28,7 +28,9 @@ export interface Token {
   fairLaunchId: string;
   address: string;
   image: Image;
+  userId: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Social {

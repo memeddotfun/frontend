@@ -1,142 +1,34 @@
-import type { Route } from "./+types/explore";
+import { useLoaderData } from "react-router";
 import { Intro } from "@/components/app/explore/Intro";
 import { MemeTokensList } from "@/components/app/explore/MemeTokensList";
 import { Leaderboard } from "@/components/app/explore/Leaderboard";
 import meme from "@/assets/images/meme.png";
 import { HorizontalCard } from "@/components/app/explore/HorizontalCard";
-export default function Explore() {
-  const memeTokens = [
-    {
-      id: 1,
-      name: "GLMP",
-      creator: "Odaruk",
-      price: 3.5,
-      marketCap: "52K",
-      progress: 52,
-      active: true,
-      badge: "Active",
-      badgeColor: "bg-green-500",
-    },
-    {
-      id: 2,
-      name: "PEPE",
-      creator: "FrogKing",
-      price: 0.0012,
-      marketCap: "2.8M",
-      progress: 85,
-      active: false,
-      badge: "Trending",
-      badgeColor: "bg-orange-500",
-    },
-    {
-      id: 3,
-      name: "DOGE2",
-      creator: "ShibaLord",
-      price: 0.85,
-      marketCap: "1.2M",
-      progress: 78,
-      active: true,
-      badge: "Hot",
-      badgeColor: "bg-red-500",
-    },
-    {
-      id: 4,
-      name: "MOON",
-      creator: "CryptoAstro",
-      price: 12.34,
-      marketCap: "456K",
-      progress: 34,
-      active: false,
-      badge: "New",
-      badgeColor: "bg-blue-500",
-    },
-    {
-      id: 5,
-      name: "CATS",
-      creator: "KittyMaster",
-      price: 0.067,
-      marketCap: "890K",
-      progress: 67,
-      active: false,
-      badge: "At 100%",
-      badgeColor: "bg-yellow-500",
-    },
-    {
-      id: 6,
-      name: "ROCKET",
-      creator: "SpaceMan",
-      price: 5.67,
-      marketCap: "234K",
-      progress: 23,
-      active: false,
-      badge: "New",
-      badgeColor: "bg-blue-500",
-    },
-    {
-      id: 7,
-      name: "DIAMOND",
-      creator: "GemLord",
-      price: 45.89,
-      marketCap: "1.5M",
-      progress: 92,
-      badge: "Active",
-      badgeColor: "bg-green-500",
-    },
-    {
-      id: 8,
-      name: "WOJAK",
-      creator: "SadBoy",
-      price: 1.23,
-      marketCap: "678K",
-      progress: 45,
-      badge: "Trending",
-      badgeColor: "bg-orange-500",
-    },
-    {
-      id: 9,
-      name: "BONK",
-      creator: "DogeMaster",
-      price: 0.00034,
-      marketCap: "3.2M",
-      progress: 88,
-      badge: "At 100%",
-      badgeColor: "bg-yellow-500",
-    },
-    {
-      id: 10,
-      name: "SHIB2",
-      creator: "InuKing",
-      price: 0.0089,
-      marketCap: "567K",
-      progress: 56,
-      active: true,
-      badge: "Hot",
-      badgeColor: "bg-red-500",
-    },
-    {
-      id: 11,
-      name: "FLOKI",
-      creator: "VikingMeme",
-      price: 0.156,
-      marketCap: "789K",
-      progress: 71,
-      active: false,
-      badge: "Active",
-      badgeColor: "bg-green-500",
-    },
-    {
-      id: 12,
-      name: "SAFE",
-      creator: "MoonSafe",
-      price: 0.0002,
-      marketCap: "123K",
-      progress: 12,
-      active: false,
-      badge: "New",
-      badgeColor: "bg-blue-500",
-    },
-  ];
+import { memeTokensLoader, type LoaderData } from "@/lib/api/loaders";
+import type { Token } from "@/hooks/api/useAuth";
 
+// Export the loader for this route, following the project convention
+export { memeTokensLoader as loader };
+
+export default function Explore() {
+  // Use the data loaded by the loader
+  const { data: loadedTokens, error } = useLoaderData() as LoaderData<Token[]>;
+
+  // Adapt the loaded data to the format expected by the MemeTokenCard component
+  const memeTokens = (loadedTokens || []).map((token) => ({
+    id: token.id,
+    name: "Unnamed Token", // Placeholder
+    creator: `user...${token.userId.slice(-4)}`, // Placeholder
+    price: 0, // Placeholder
+    marketCap: "N/A", // Placeholder
+    progress: 0, // Placeholder
+    active: false, // Placeholder
+    badge: "New", // Placeholder
+    badgeColor: "bg-blue-500", // Placeholder
+    image: token.image.s3Key, // Real data
+  }));
+
+  // TODO: This is mock data and should be replaced by a loader
   const leaderboard = [
     {
       id: 1,
@@ -184,6 +76,14 @@ export default function Explore() {
       engagement: "9.4K",
     },
   ];
+
+  if (error) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center text-red-500 bg-gray-900 p-4 rounded-lg">
+        <p className="text-lg">Error loading tokens: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen  w-full">

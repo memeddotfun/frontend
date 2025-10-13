@@ -1,15 +1,15 @@
 import { Flame, Timer } from "lucide-react";
-import meme from "@/assets/images/meme.png";
 import { Link } from "react-router";
 
 interface MemeTokenCardProps {
   token: {
-    id: number;
+    id: string;
     name: string;
     creator: string;
     price: number;
     marketCap: string;
     progress: number;
+    image: string; // Added image prop
     active?: boolean;
     badge?: string;
     badgeColor?: string;
@@ -24,7 +24,7 @@ export function MemeTokenCard({ token }: MemeTokenCardProps) {
     >
       <div className="flex items-center gap-2 sm:gap-3">
         <img
-          src={meme}
+          src={token.image} // Use the image from the token prop
           alt={token.name}
           className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg object-cover flex-shrink-0"
         />
