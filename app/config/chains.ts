@@ -10,10 +10,10 @@ export function getChainConfig() {
   if (isDevelopment) {
     // Development: Use both mainnet and testnet for testing
     return {
-      chains: [base, baseSepolia] as const,
+      chains: [baseSepolia, base] as const,
       transports: {
-        [base.id]: base.rpcUrls.default.http[0]!,
         [baseSepolia.id]: baseSepolia.rpcUrls.default.http[0]!,
+        [base.id]: base.rpcUrls.default.http[0]!,
       },
     };
   } else {

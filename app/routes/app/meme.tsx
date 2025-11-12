@@ -1,11 +1,13 @@
 import MemeIntroCard from "@/components/app/meme/MemeCard";
 import SocialMediaStats from "@/components/app/meme/SocialMediaStats";
 import LaunchProgress from "@/components/app/meme/LaunchProgress";
-import CommitGHOForm from "@/components/app/meme/CommitGHOForm";
+import CommitETHForm from "@/components/app/meme/CommitETHForm";
 import CountdownTimer from "@/components/app/meme/CountdownTimer";
-import { useState } from "react";
+import ReadyToLaunch from "@/components/app/meme/ReadyToLaunch";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router";
 import TradeForm from "@/components/app/meme/TradeForm";
+import { useFairLaunchData } from "@/hooks/contracts/useMemedTokenSale";
 import BattleHistory from "@/components/app/meme/BattleHistory";
 import ActiveBattles from "@/components/app/meme/ActiveBattles";
 import { ChevronLeft, Sword } from "lucide-react";
@@ -20,8 +22,67 @@ export default function Meme() {
   const { data: token, error } = useLoaderData() as LoaderData<Token>;
   const navigate = useNavigate();
   const { memeId } = useParams();
-  const [active, setActive] = useState<boolean>(true);
+  const [active, setActive] = useState<boolean>(false);
+  const [refreshKey, setRefreshKey] = useState<string>(Date.now().toString());
+
+  // Phase states: 1 = commitment, 2 = ready to launch, 3 = launched
+  const [currentPhase, setCurrentPhase] = useState<1 | 2 | 3>(1);
+
   console.log(token);
+  // Helper function to convert token ID to contract ID
+  const getContractTokenId = (token: Token) => {
+    try {
+      if (token.fairLaunchId !== undefined && token.fairLaunchId !== null) {
+        return BigInt(token.fairLaunchId);
+      }
+
+      if (token.id !== undefined && token.id !== null) {
+        return BigInt(token.id);
+      }
+
+      return 0n;
+    } catch (error) {
+      console.error("Error converting ID to BigInt:", error);
+      return 0n;
+    }
+  };
+
+  // Use the proper contract ID conversion function
+  const contractTokenId = token ? getContractTokenId(token) : 0n;
+
+  // Monitor fair launch status for real-time phase changes
+  const { data: fairLaunchData } = useFairLaunchData(contractTokenId);
+
+  // Real-time phase monitoring
+  useEffect(() => {
+    if (fairLaunchData) {
+      const status = fairLaunchData[0]; // status is at index 0
+
+      console.log("=== PHASE MONITORING ===");
+      console.log("Current contract status:", status);
+      console.log("Current UI phase:", currentPhase);
+
+      if (status === 1) {
+        setCurrentPhase(1); // Commitment phase
+        setActive(false);
+      } else if (status === 2) {
+        setCurrentPhase(2); // Ready to launch phase
+        setActive(false);
+      } else if (status === 3) {
+        setCurrentPhase(3); // Launched phase
+        setActive(true);
+      }
+
+      console.log("Updated UI phase to:", status);
+      console.log("=== END PHASE MONITORING ===");
+    }
+  }, [fairLaunchData, currentPhase]);
+
+  // Callback to refresh launch progress when commit succeeds
+  const handleCommitSuccess = useCallback(() => {
+    setRefreshKey(Date.now().toString());
+  }, []);
+
   const handleBack = () => navigate(-1);
   if (error) {
     return (
@@ -72,31 +133,62 @@ export default function Meme() {
           <div className="flex-1 min-w-0 space-y-4 sm:space-y-6">
             <SocialMediaStats />
 
-            {/* Mint Warriors Button */}
-            <Link
-              to={`/explore/meme/${memeId}/mint`}
-              className="bg-green-500 hover:bg-green-700 text-black font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Sword className="w-5 h-5" />
-              Mint Pepe's Revenge Warriors
-            </Link>
-            {!active ? (
-              <LaunchProgress />
-            ) : (
+            {/* Mint Warriors Button - Only visible in launched phase (status 3) */}
+            {currentPhase === 3 && (
+              <Link
+                to={`/explore/meme/${memeId}/mint`}
+                className="bg-green-500 hover:bg-green-700 text-black font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Sword className="w-5 h-5" />
+                Mint Pepe's Revenge Warriors
+              </Link>
+            )}
+            {/* Phase-based rendering */}
+            {currentPhase === 1 && (
+              <LaunchProgress tokenId={contractTokenId} key={refreshKey} />
+            )}
+            {currentPhase === 2 && (
+              <ReadyToLaunch
+                tokenId={contractTokenId}
+                fairLaunchData={fairLaunchData}
+              />
+            )}
+            {currentPhase === 3 && (
               <>
                 <ActiveBattles />
                 <BattleHistory />
               </>
             )}
           </div>
-          {/* Right Section: Commit + Timer */}
-          {!active && (
+          {/* Right Section: Phase-based panels */}
+          {currentPhase === 1 && (
             <div className="w-full xl:w-[400px] flex flex-col space-y-4 sm:space-y-6">
-              <CommitGHOForm />
+              <CommitETHForm
+                tokenId={contractTokenId}
+                onCommitSuccess={handleCommitSuccess}
+              />
               <CountdownTimer />
             </div>
           )}
-          {active && (
+          {currentPhase === 2 && (
+            <div className="w-full xl:w-[400px] flex flex-col space-y-4 sm:space-y-6">
+              {/* No forms available in ready-to-launch phase */}
+              <div className="bg-neutral-900 p-6 rounded-xl">
+                <h3 className="text-white text-lg font-semibold mb-4">
+                  🔒 Launch Preparation
+                </h3>
+                <div className="text-neutral-400 text-sm space-y-2">
+                  <p>All systems ready for launch!</p>
+                  <p>
+                    Trading will be available once the project officially
+                    launches.
+                  </p>
+                </div>
+              </div>
+              <CountdownTimer />
+            </div>
+          )}
+          {currentPhase === 3 && (
             <div className="w-full xl:w-[400px] flex flex-col space-y-4 sm:space-y-6">
               <TradeForm />
               {/*<StakeForm />*/}

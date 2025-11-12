@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  useSellTokens,
-  useGetTokenToNativeToken,
-  useGetNativeToTokenAmount,
+  usePricePerTokenWei,
 } from "@/hooks/contracts/useMemedTokenSale";
 import { parseEther, formatEther } from "viem";
 
@@ -25,7 +23,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export default function TradeForm() {
   const [mode, setMode] = useState<"buy" | "sell">("buy");
-  const [buyAmount, setBuyAmount] = useState(""); // Amount of GHO to pay
+  const [buyAmount, setBuyAmount] = useState(""); // Amount of ETH to pay
   const [sellAmount, setSellAmount] = useState(""); // Amount of MEME to sell
   const [receiveAmount, setReceiveAmount] = useState("");
 
@@ -42,41 +40,55 @@ export default function TradeForm() {
     : 0n;
 
   // --- Contract Hooks ---
-  const { sellTokens, isPending, isConfirming } = useSellTokens();
-
-  // Hook for calculating buy preview
-  const { data: buyPreviewAmount, isLoading: isLoadingBuyPreview } =
-    useGetNativeToTokenAmount(1n, buyAmountAsBigInt);
-
-  // Hook for calculating sell preview
-  const {
-    data: sellPreviewAmount,
-    isLoading: isLoadingSellPreview,
-    error,
-  } = useGetTokenToNativeToken(1n, sellAmountAsBigInt);
-  console.log(error);
+  
+  // Hook for getting the fixed price per token
+  const { data: pricePerTokenWei, isLoading: isLoadingPrice } = usePricePerTokenWei();
+  
+  // Calculate buy preview: tokens = ethAmount / pricePerTokenWei
+  const buyPreviewAmount = pricePerTokenWei && buyAmountAsBigInt > 0n
+    ? (buyAmountAsBigInt * parseEther("1")) / pricePerTokenWei
+    : 0n;
+  
+  // Calculate sell preview: eth = tokenAmount * pricePerTokenWei
+  const sellPreviewAmount = pricePerTokenWei && sellAmountAsBigInt > 0n
+    ? (sellAmountAsBigInt * pricePerTokenWei) / parseEther("1")
+    : 0n;
+  
+  const isLoadingBuyPreview = isLoadingPrice;
+  const isLoadingSellPreview = isLoadingPrice;
   // --- Effects ---
 
   // Update receive amount when buy preview data changes
   useEffect(() => {
-    if (mode === "buy" && buyPreviewAmount) {
+    if (mode === "buy" && buyPreviewAmount && buyPreviewAmount > 0n) {
       setReceiveAmount(formatEther(buyPreviewAmount));
+    } else if (mode === "buy" && (!buyAmount || buyAmount === "")) {
+      setReceiveAmount("");
     }
-  }, [buyPreviewAmount, mode]);
+  }, [buyPreviewAmount, mode, buyAmount]);
 
   // Update receive amount when sell preview data changes
   useEffect(() => {
-    if (mode === "sell" && sellPreviewAmount) {
+    if (mode === "sell" && sellPreviewAmount && sellPreviewAmount > 0n) {
       setReceiveAmount(formatEther(sellPreviewAmount));
+    } else if (mode === "sell" && (!sellAmount || sellAmount === "")) {
+      setReceiveAmount("");
     }
-  }, [sellPreviewAmount, mode]);
+  }, [sellPreviewAmount, mode, sellAmount]);
+
+  // Clear amounts when switching modes
+  useEffect(() => {
+    setBuyAmount("");
+    setSellAmount("");
+    setReceiveAmount("");
+  }, [mode]);
 
   // --- Handlers ---
 
   const handleSellSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!sellAmount || parseFloat(sellAmount) <= 0) return;
-    sellTokens({ id: 1n, amount: sellAmountAsBigInt });
+    alert("Sell functionality not yet implemented.");
   };
 
   const handleBuySubmit = (e: React.FormEvent) => {
@@ -86,7 +98,6 @@ export default function TradeForm() {
 
   // --- Render Logic ---
 
-  const isLoadingTx = isPending || isConfirming;
   const isAmountInvalid =
     mode === "buy"
       ? !buyAmount || parseFloat(buyAmount) <= 0
@@ -119,10 +130,10 @@ export default function TradeForm() {
       {mode === "buy" ? (
         <>
           <div>
-            <label className="block text-sm mb-1">Pay With GHO</label>
+            <label className="block text-sm mb-1">Pay With ETH</label>
             <input
               type="number"
-              placeholder="0.00 GHO"
+              placeholder="0.00 ETH"
               value={buyAmount}
               onChange={(e) => setBuyAmount(e.target.value)}
               className="w-full px-4 py-3 bg-neutral-800 rounded-lg placeholder-neutral-400 text-sm"
@@ -154,10 +165,10 @@ export default function TradeForm() {
           </div>
           <div className="text-center text-2xl text-neutral-400">↓</div>
           <div>
-            <label className="block text-sm mb-1">Receive GHO</label>
+            <label className="block text-sm mb-1">Receive ETH</label>
             <input
               type="number"
-              placeholder={isLoadingSellPreview ? "Calculating..." : "0.00 GHO"}
+              placeholder={isLoadingSellPreview ? "Calculating..." : "0.00 ETH"}
               value={receiveAmount}
               disabled
               className="w-full px-4 py-3 bg-neutral-800 rounded-lg placeholder-neutral-400 text-sm"
@@ -168,14 +179,10 @@ export default function TradeForm() {
 
       <button
         type="submit"
-        disabled={isLoadingTx || isAmountInvalid}
+        disabled={isAmountInvalid}
         className="w-full py-3 cursor-pointer rounded-lg text-sm font-semibold bg-green-400 text-black hover:bg-green-600 transition-colors disabled:bg-neutral-600 disabled:cursor-not-allowed"
       >
-        {isLoadingTx
-          ? "Processing..."
-          : mode === "buy"
-            ? "Buy MEME"
-            : "Sell MEME"}
+        {mode === "buy" ? "Buy MEME" : "Sell MEME"}
       </button>
     </form>
   );

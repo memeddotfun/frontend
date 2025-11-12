@@ -3,22 +3,41 @@ import {
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
+  useChainId,
 } from "wagmi";
 import { TOKEN_SALE_ADDRESS } from "@/config/contracts";
 import { memedTokenSaleAbi } from "@/abi";
+import { baseSepolia, base } from "wagmi/chains";
 
 /**
- * Hook to read data for a specific fair launch.
+ * Hook to read the status of a specific fair launch.
  * @param launchId The ID of the fair launch.
  */
-export function useGetFairLaunchData(launchId: bigint) {
+export function useGetFairLaunchStatus(launchId: bigint) {
   return useReadContract({
     address: TOKEN_SALE_ADDRESS,
     abi: memedTokenSaleAbi,
-    functionName: "getFairLaunchData",
+    functionName: "getFairLaunchStatus",
     args: [launchId],
     query: {
       enabled: !!launchId,
+    },
+  });
+}
+
+/**
+ * Hook to read full fair launch data using fairLaunchData function.
+ * @param launchId The ID of the fair launch.
+ */
+export function useFairLaunchData(launchId: bigint) {
+  return useReadContract({
+    address: TOKEN_SALE_ADDRESS,
+    abi: memedTokenSaleAbi,
+    functionName: "fairLaunchData",
+    args: [launchId],
+    chainId: baseSepolia.id, // Force Base Sepolia since contract is deployed there
+    query: {
+      enabled: !!launchId && launchId >= 0n,
     },
   });
 }
@@ -51,14 +70,14 @@ export function useGetUserCommitment(
 
 /**
  * Hook for the `commitToFairLaunch` write function.
- * This is a payable function used to commit funds to a token sale.
+ * This function takes _id and amount as parameters.
  */
 export function useCommitToFairLaunch() {
   const { data: hash, error, isPending, writeContract } = useWriteContract();
 
   type CommitToFairLaunchArgs = {
     launchId: bigint;
-    value: bigint; // For the payable amount (msg.value)
+    amount: bigint;
   };
 
   const commitToFairLaunch = (args: CommitToFairLaunchArgs) => {
@@ -66,8 +85,7 @@ export function useCommitToFairLaunch() {
       address: TOKEN_SALE_ADDRESS,
       abi: memedTokenSaleAbi,
       functionName: "commitToFairLaunch",
-      args: [args.launchId],
-      value: args.value,
+      args: [args.launchId, args.amount],
     });
   };
 
@@ -86,23 +104,62 @@ export function useCommitToFairLaunch() {
   };
 }
 
+
+
 /**
- * Hook for the `sellTokens` write function on the MemedTokenSale contract.
+ * Hook to read the fixed price per token in wei.
  */
-export function useSellTokens() {
+export function usePricePerTokenWei() {
+  return useReadContract({
+    address: TOKEN_SALE_ADDRESS,
+    abi: memedTokenSaleAbi,
+    functionName: "PRICE_PER_TOKEN_WEI",
+  });
+}
+
+/**
+ * Hook to read the current ID counter from the contract.
+ */
+export function useCurrentId() {
+  return useReadContract({
+    address: TOKEN_SALE_ADDRESS,
+    abi: memedTokenSaleAbi,
+    functionName: "id",
+  });
+}
+
+/**
+ * Hook to check if a fair launch ID exists by checking if it's within valid range
+ * @param launchId The ID to validate
+ */
+export function useValidateFairLaunchId(launchId: bigint) {
+  const { data: currentId, isLoading } = useCurrentId();
+  
+  const isValid = currentId !== undefined && launchId > 0n && launchId <= currentId;
+  
+  return {
+    isValid,
+    isLoading,
+    currentMaxId: currentId,
+  };
+}
+
+/**
+ * Hook for the `cancelCommit` write function.
+ */
+export function useCancelCommit() {
   const { data: hash, error, isPending, writeContract } = useWriteContract();
 
-  type SellTokensArgs = {
+  type CancelCommitArgs = {
     id: bigint;
-    amount: bigint;
   };
 
-  const sellTokens = (args: SellTokensArgs) => {
+  const cancelCommit = (args: CancelCommitArgs) => {
     writeContract({
       address: TOKEN_SALE_ADDRESS,
       abi: memedTokenSaleAbi,
-      functionName: "sellTokens",
-      args: [args.id, args.amount],
+      functionName: "cancelCommit",
+      args: [args.id],
     });
   };
 
@@ -111,39 +168,12 @@ export function useSellTokens() {
       hash,
     });
 
-  return { sellTokens, isPending, isConfirming, isConfirmed, hash, error };
-}
-
-/**
- * Hook to preview the amount of native token received for selling a given amount of tokens.
- * @param id The ID of the fair launch.
- * @param amount The amount of tokens to sell (as a bigint, in wei).
- */
-export function useGetTokenToNativeToken(id: bigint, amount: bigint) {
-  return useReadContract({
-    address: TOKEN_SALE_ADDRESS,
-    abi: memedTokenSaleAbi,
-    functionName: "getTokenToNativeToken",
-    args: [id, amount],
-    query: {
-      enabled: !!id && !!amount && amount > 0n,
-    },
-  });
-}
-
-/**
- * Hook to preview the amount of tokens received for a given amount of native token.
- * @param id The ID of the fair launch.
- * @param amount The amount of native token to spend (as a bigint, in wei).
- */
-export function useGetNativeToTokenAmount(id: bigint, amount: bigint) {
-  return useReadContract({
-    address: TOKEN_SALE_ADDRESS,
-    abi: memedTokenSaleAbi,
-    functionName: "getNativeToTokenAmount",
-    args: [id, amount],
-    query: {
-      enabled: !!id && !!amount && amount > 0n,
-    },
-  });
+  return {
+    cancelCommit,
+    isPending,
+    isConfirming,
+    isConfirmed,
+    hash,
+    error,
+  };
 }

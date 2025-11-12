@@ -1,8 +1,8 @@
 import { FlameIcon, Share2Icon } from "lucide-react";
-import type { Token } from "@/hooks/api/useAuth";
+import type { Token } from "@/hooks/api/useAuth"; // Re-added Token import
 
 interface MemeIntroCardProps {
-  token: Token;
+  token: Token; // Reverted to Token type
 }
 
 const MemeIntroCard = ({ token }: MemeIntroCardProps) => {
@@ -12,7 +12,7 @@ const MemeIntroCard = ({ token }: MemeIntroCardProps) => {
         {/* Left: Frog Image */}
         <div className="w-full md:w-1/6 h-full">
           <img
-            src={token.image.s3Key} // Use real image URL
+            src={token.image.s3Key} // Use real image URL from Token
             alt={"Token Image"} // Use a generic alt
             className="w-full h-full rounded-xl object-cover"
           />
@@ -30,11 +30,12 @@ const MemeIntroCard = ({ token }: MemeIntroCardProps) => {
           {/* Meta Info */}
           <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-400 mb-3">
             <span className="text-green-400 font-medium">
-              user...{token.userId.slice(-4)}
+              user...{token.userId.slice(-4)} {/* Use userId from Token */}
             </span>
             <span className="w-1 h-1 bg-neutral-600 rounded-full" />
             <span>
-              Created {new Date(token.createdAt).toLocaleDateString()}
+              Created {new Date(token.createdAt).toLocaleDateString()}{" "}
+              {/* Use createdAt from Token */}
             </span>
           </div>
 
