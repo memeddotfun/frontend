@@ -10,11 +10,15 @@ import { API_ENDPOINTS } from "@/lib/api/config";
 import { Share2Icon } from "lucide-react";
 import { Link } from "react-router";
 import { useCreateNonce } from "@/hooks/api/useAuth";
+import { useIsMintable } from "@/hooks/contracts/useMemedTokenSale";
 
 export default function LaunchPage() {
   const { address } = useAccount();
   const { mutate: createNonce } = useCreateNonce();
   const { signMessageAsync } = useSignMessage();
+
+  // Check if user is allowed to mint/launch tokens
+  const { data: isMintable, isLoading: isMintableLoading } = useIsMintable(address);
 
   // State for the multi-step form
   const [step, setStep] = useState(1);
@@ -208,6 +212,8 @@ export default function LaunchPage() {
                 <ConnectProfile
                   setStep={setStep}
                   selectedAccount={null} // Dummy data removed
+                  isMintable={isMintable}
+                  isMintableLoading={isMintableLoading}
                 />
               )}
               {step === 2 && (
@@ -236,6 +242,8 @@ export default function LaunchPage() {
                   memeTitle={memeTitle}
                   setMemeTitle={setMemeTitle}
                   memeDescription={memeDescription}
+                  isMintable={isMintable}
+                  isMintableLoading={isMintableLoading}
                 />
               )}
             </div>

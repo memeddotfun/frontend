@@ -17,15 +17,20 @@ export default function Explore() {
   // Adapt the loaded data to the format expected by the MemeTokenCard component
   const memeTokens = (loadedTokens || []).map((token) => ({
     id: token.id,
-    name: "Unnamed Token", // Placeholder
-    creator: `user...${token.userId.slice(-4)}`, // Placeholder
-    price: 0, // Placeholder
-    marketCap: "N/A", // Placeholder
-    progress: 0, // Placeholder
-    active: false, // Placeholder
+    name: token.metadata?.name || "Unnamed Token", // Real token name
+    creator: `user...${token.userId?.slice(-4) || "Unknown"}`, // Real user ID (shortened) with safe access
+    ticker: token.metadata?.ticker || "UNKN", // Real ticker symbol
+    description: token.metadata?.description || "No description", // Real description
+    price: 0, // TODO: Calculate from fair launch data
+    marketCap: "N/A", // TODO: Calculate from fair launch data
+    progress: 0, // TODO: Calculate from fair launch data
+    active: false, // TODO: Determine from fair launch status
     badge: "New", // Placeholder
     badgeColor: "bg-blue-500", // Placeholder
-    image: token.image.s3Key, // Real data
+    image: token.metadata?.imageKey || meme, // Real image from metadata
+    fairLaunchId: token.fairLaunchId, // Real fair launch ID
+    address: token.address, // Token contract address (if deployed)
+    createdAt: token.createdAt, // Token creation timestamp for sorting
   }));
 
   // TODO: This is mock data and should be replaced by a loader

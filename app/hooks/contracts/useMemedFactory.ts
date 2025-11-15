@@ -57,19 +57,37 @@ export function useStartFairLaunch() {
   return { startFairLaunch, isPending, isConfirming, isConfirmed, hash, error };
 }
 
-// You can add more hooks for other contract functions here.
-// For example, a hook to get a single token by ID:
-/*
-export function useGetTokenById(tokenId: bigint) {
+/**
+ * Hook to read a single token's data from the MemedFactory contract.
+ * This calls the `tokenData` view function.
+ * @param tokenId The ID of the token to fetch.
+ */
+export function useGetTokenData(tokenId: bigint) {
   return useReadContract({
     address: FACTORY_ADDRESS,
     abi: factoryAbi,
-    functionName: 'getTokenById',
+    functionName: "tokenData",
     args: [tokenId],
-    // Enable/disable the query based on whether tokenId is provided
     query: {
       enabled: !!tokenId,
     },
   });
 }
-*/
+
+/**
+ * Hook to get the Warrior NFT contract address for a specific token.
+ * This calls the `getWarriorNFT` view function on the MemedFactory contract.
+ * @param tokenAddress The address of the Memed token.
+ * @returns The address of the Warrior NFT contract associated with the token.
+ */
+export function useGetWarriorNFT(tokenAddress: `0x${string}` | undefined) {
+  return useReadContract({
+    address: FACTORY_ADDRESS,
+    abi: factoryAbi,
+    functionName: "getWarriorNFT",
+    args: tokenAddress ? [tokenAddress] : undefined,
+    query: {
+      enabled: !!tokenAddress,
+    },
+  });
+}

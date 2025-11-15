@@ -1,15 +1,32 @@
-import { useParams, useNavigate } from "react-router";
+import { useNavigate, useLoaderData } from "react-router";
 import { ChevronLeft } from "lucide-react";
+import { useEffect } from "react";
 import MintPriceAndHeat from "@/components/app/mint-warriors/MintPriceAndHeat";
 import PriceHistory from "@/components/app/mint-warriors/PriceHistory";
 import MintWarriorPanel from "@/components/app/mint-warriors/MintWarriorPanel";
+import { useGetWarriorNFT } from "@/hooks/contracts/useMemedFactory";
+import { memeTokenDetailLoader, type LoaderData } from "@/lib/api/loaders";
+import type { Token } from "@/hooks/api/useAuth";
+
+// Export the loader for this route
+export { memeTokenDetailLoader as loader };
 
 export default function MintWarriors() {
   const navigate = useNavigate();
-  const { memeId } = useParams();
+  const { data: token, error } = useLoaderData() as LoaderData<Token>;
 
-  // For now using hardcoded token name, in real app this would come from data based on memeId
-  const tokenName = "Pepe's Revenge";
+  // Get warrior NFT address for this token using the token's contract address
+  const { data: warriorNFTAddress } = useGetWarriorNFT(token?.address as `0x${string}` | undefined);
+
+  // Log warrior NFT address when available
+  useEffect(() => {
+    if (warriorNFTAddress) {
+      console.log("Warrior NFT Address:", warriorNFTAddress);
+    }
+  }, [warriorNFTAddress]);
+
+  // Use actual token name from metadata
+  const tokenName = token?.metadata?.name || "Token";
 
   return (
     <div className="min-h-screen text-white">
@@ -37,12 +54,18 @@ export default function MintWarriors() {
           {/* Left Column - Main Content */}
           <div className="xl:col-span-2 space-y-6">
             <MintPriceAndHeat />
-            <PriceHistory />
+            <PriceHistory
+              warriorNFTAddress={warriorNFTAddress}
+              tokenName={tokenName}
+            />
           </div>
 
           {/* Right Column - Mint Warrior */}
           <div className="xl:col-span-1">
-            <MintWarriorPanel tokenName={tokenName} />
+            <MintWarriorPanel
+              warriorNFTAddress={warriorNFTAddress}
+              tokenName={tokenName}
+            />
           </div>
         </div>
       </div>

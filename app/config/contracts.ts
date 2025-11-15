@@ -6,11 +6,11 @@
 // TODO: Add addresses for other networks as needed.
 
 export const CONTRACT_ADDRESSES = {
-  factory: "0x3f9293d413a6644c811A77b9e5237272Eac38DC0",
-  memedBattle: "0x8A561626d4396A14eD5577dD63F031083Cb2dda3",
-  memedBattleResolver: "0xC46a0778D82Dc299a5Bc3c0582773B5877880167",
-  memedEngageToEarn: "0x09d8302e82539A221c108823b9B058f7582beb8d",
-  memedTokenSale: "0xF955116a4dd29b33cC5D9ce201821178b7862FC6",
+  factory: "0x5F6F5dE1Bc7D55F8E39ed96678c16f48556067db",
+  memedBattle: "0xC97B080C92c97c3E032867b133C7591623E43735",
+  memedBattleResolver: "0x70753723151DAE0D320dAFfc8FCfec6FABD40746",
+  memedEngageToEarn: "0xac74D22AD556435AE6626B67fA8a21E719629EF2",
+  memedTokenSale: "0xb8455B67dcADe28D169c2A178695D8959e38237c",
 } as const;
 
 // It's also useful to export them individually for direct import
@@ -19,3 +19,7 @@ export const BATTLE_ADDRESS = CONTRACT_ADDRESSES.memedBattle;
 export const BATTLE_RESOLVER_ADDRESS = CONTRACT_ADDRESSES.memedBattleResolver;
 export const ENGAGE_TO_EARN_ADDRESS = CONTRACT_ADDRESSES.memedEngageToEarn;
 export const TOKEN_SALE_ADDRESS = CONTRACT_ADDRESSES.memedTokenSale;
+
+// Payment token for fair launch commitments
+export const PAYMENT_TOKEN_ADDRESS =
+  "0xc190e6F26cE14e40D30251fDe25927A73a5D58b6" as const;

@@ -23,11 +23,24 @@ export interface Image {
   createdAt: string;
 }
 
+export interface Metadata {
+  id: string;
+  cid: string;
+  name: string;
+  ticker: string;
+  description: string;
+  imageKey: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Token {
   id: string;
   fairLaunchId: string;
   address: string;
-  image: Image;
+  image?: Image; // Made optional since it might not always be present
+  metadata?: Metadata; // Added metadata property
+  metadataId?: string; // Added metadataId property
   userId: string;
   createdAt: string;
   updatedAt: string;

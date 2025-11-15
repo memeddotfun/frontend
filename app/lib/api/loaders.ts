@@ -85,7 +85,6 @@ export function createApiLoader<T>(
     cacheKey?: string;
   } = {},
 ) {
-  console.log(`Creating API loader for endpoint: ${endpoint}`, options);
   return async ({ request, params }: LoaderFunctionArgs): Promise<Response> => {
     try {
       // Replace URL parameters in endpoint
@@ -152,7 +151,6 @@ export function createApiLoader<T>(
 export function createParallelLoader<T extends Record<string, any>>(
   loaders: Record<keyof T, string | (() => Promise<any>)>,
 ) {
-  console.log("Creating parallel loader with:", loaders);
   return async ({ request, params }: LoaderFunctionArgs): Promise<Response> => {
     const results: Partial<T> = {};
     const errors: Record<string, string> = {};
@@ -248,24 +246,18 @@ export const authLoader = async ({
 }: LoaderFunctionArgs): Promise<Response> => {
   try {
     const cookie = request.headers.get("Cookie");
-    console.log("🍪 Cookie from request:", cookie); // Debug
 
     const headers: HeadersInit = {};
     if (cookie) {
       headers["Cookie"] = cookie;
     }
 
-    console.log("📤 Sending headers:", headers); // Debug
-
     const response = await apiClient.get<GetUserResponse>(
       API_ENDPOINTS.GET_USER,
       { headers },
     );
 
-    console.log("📥 Response:", response); // Debug
-
     if (!response.data.user) {
-      console.log("No user found");
       throw redirect("/login");
     }
 
@@ -345,9 +337,6 @@ export async function prefetchData<T>(
  */
 export function invalidateCache(patterns: string[]): void {
   // This would integrate with your caching strategy
-  // For now, we'll just log the invalidation
-  console.log("Invalidating cache for patterns:", patterns);
-
   // In a real implementation, you might:
   // - Clear React Query cache
   // - Clear SWR cache
