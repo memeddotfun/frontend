@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TokenSettingForm({
@@ -13,6 +13,8 @@ export default function TokenSettingForm({
   memeTitle,
   setMemeTitle,
   memeDescription,
+  isMintable,
+  isMintableLoading,
 }: {
   handlePrevStep: () => void;
   handleMint: () => void;
@@ -24,6 +26,8 @@ export default function TokenSettingForm({
   memeTitle: string;
   setMemeTitle: (title: string) => void;
   memeDescription: string;
+  isMintable?: boolean;
+  isMintableLoading?: boolean;
 }) {
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [isSymbolDialogOpen, setIsSymbolDialogOpen] = useState(false);
@@ -108,13 +112,13 @@ export default function TokenSettingForm({
                     {memeTitle || "Untitled Token"}
                   </div>
                   <button
-                    className="ml-2 h-6 w-6 rounded-full p-0 hover:bg-neutral-700 text-gray-400"
+                    className="ml-2 p-1.5 rounded-lg hover:bg-green-500/10 text-green-500 transition-colors"
                     onClick={() => {
                       setTempTitle(memeTitle);
                       setIsNameDialogOpen(true);
                     }}
                   >
-                    ✏️
+                    <Pencil size={16} />
                   </button>
                 </div>
               </div>
@@ -128,13 +132,13 @@ export default function TokenSettingForm({
                     {memeSymbol || "---"}
                   </div>
                   <button
-                    className="ml-2 h-6 w-6 rounded-full p-0 hover:bg-neutral-700 text-gray-400"
+                    className="ml-2 p-1.5 rounded-lg hover:bg-green-500/10 text-green-500 transition-colors"
                     onClick={() => {
                       setTempSymbol(memeSymbol);
                       setIsSymbolDialogOpen(true);
                     }}
                   >
-                    ✏️
+                    <Pencil size={16} />
                   </button>
                 </div>
               </div>
@@ -198,6 +202,19 @@ export default function TokenSettingForm({
         </div>
       </div>
 
+      {/* Mintable Status Warning */}
+      {!isMintableLoading && isMintable === false && (
+        <div className="mt-8 bg-red-500/10 border border-red-500 text-red-400 p-4 rounded-lg">
+          <h3 className="text-sm font-semibold mb-1">
+            ❌ Not Eligible to Launch
+          </h3>
+          <p className="text-xs text-red-300">
+            Your wallet address is not currently eligible to launch tokens.
+            Please check the eligibility requirements.
+          </p>
+        </div>
+      )}
+
       {/* Footer with action buttons */}
       <div className="mt-10 pt-6 border-t border-neutral-700 flex flex-col sm:flex-row justify-between items-center gap-4">
         <button
@@ -211,7 +228,7 @@ export default function TokenSettingForm({
           <label className="flex items-center cursor-pointer">
             <input
               type="checkbox"
-              className="w-4 h-4 mr-2 accent-primary"
+              className="w-4 h-4 mr-2 accent-green-500"
               checked={hasReviewed}
               onChange={() => setHasReviewed(!hasReviewed)}
             />
@@ -221,24 +238,26 @@ export default function TokenSettingForm({
           </label>
           <button
             onClick={handleMint}
-            className="w-full sm:w-auto bg-green-600 p-2  text-white hover:bg-primary-dark cursor-pointer px-8 border border-neutral-800  hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0_0,1)]"
+            className="w-full sm:w-auto bg-green-600 p-2  text-white hover:bg-green-700 cursor-pointer px-8 border border-neutral-800  hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0_0,1)]"
             disabled={
               isSigning ||
               isMinting ||
               !hasReviewed ||
               !memeTitle ||
-              !memeSymbol
+              !memeSymbol ||
+              isMintableLoading ||
+              isMintable === false
             }
           >
-            {getButtonText()}
+            {isMintableLoading ? "Checking eligibility..." : getButtonText()}
           </button>
         </div>
       </div>
 
       {/* Edit Name Dialog */}
       {isNameDialogOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50">
-          <div className="relative p-8 border border-neutral-700 shadow-lg rounded-md bg-neutral-900 max-w-md mx-auto text-white">
+        <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
+          <div className="relative p-8 border border-neutral-800 shadow-lg rounded-lg bg-neutral-900 max-w-md mx-auto text-white">
             <h3 className="text-xl font-bold mb-4">Edit Token Name</h3>
             <p className="text-gray-400 mb-4">
               This will be the official name of your token on-chain.
@@ -255,7 +274,7 @@ export default function TokenSettingForm({
                 value={tempTitle}
                 onChange={(e) => setTempTitle(e.target.value)}
                 placeholder="e.g., DogeCoin"
-                className="mt-1 block w-full p-2 border border-neutral-700 bg-neutral-800 rounded-md text-white"
+                className="mt-1 block w-full p-2 border border-neutral-700 bg-neutral-800 rounded-md text-white focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/50 transition-colors"
               />
               <p className="text-xs text-gray-400 mt-1">
                 Choose a memorable name that reflects your meme.
@@ -263,13 +282,13 @@ export default function TokenSettingForm({
             </div>
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 border border-neutral-700 rounded-md hover:bg-neutral-700 text-white"
+                className="px-4 cursor-pointer py-2 border border-neutral-700 rounded-md hover:bg-neutral-700 text-white transition-colors"
                 onClick={() => setIsNameDialogOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                className="px-4 cursor-pointer py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSaveTitle}
                 disabled={!tempTitle.trim()}
               >
@@ -282,8 +301,8 @@ export default function TokenSettingForm({
 
       {/* Edit Symbol Dialog */}
       {isSymbolDialogOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50">
-          <div className="relative p-8 border border-neutral-700 shadow-lg rounded-md bg-neutral-900 max-w-md mx-auto text-white">
+        <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
+          <div className="relative p-8 border border-neutral-800 shadow-lg rounded-lg bg-neutral-900 max-w-md mx-auto text-white">
             <h3 className="text-xl font-bold mb-4">Edit Token Symbol</h3>
             <p className="text-gray-400 mb-4">
               This will be the ticker symbol for your token on exchanges.
@@ -300,7 +319,7 @@ export default function TokenSettingForm({
                 value={tempSymbol}
                 onChange={(e) => setTempSymbol(e.target.value.toUpperCase())}
                 placeholder="e.g., DOGE"
-                className="mt-1 block w-full p-2 border border-neutral-700 bg-neutral-800 rounded-md text-white"
+                className="mt-1 block w-full p-2 border border-neutral-700 bg-neutral-800 rounded-md text-white focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/50 transition-colors"
                 maxLength={5}
               />
               <p className="text-xs text-gray-400 mt-1">
@@ -309,13 +328,13 @@ export default function TokenSettingForm({
             </div>
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 border border-neutral-700 rounded-md hover:bg-neutral-700 text-white"
+                className="px-4 cursor-pointer py-2 border border-neutral-700 rounded-md hover:bg-neutral-700 text-white transition-colors"
                 onClick={() => setIsSymbolDialogOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                className="px-4 cursor-pointer py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSaveSymbol}
                 disabled={!tempSymbol.trim()}
               >

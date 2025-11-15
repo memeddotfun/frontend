@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import {
-  usePricePerTokenWei,
-} from "@/hooks/contracts/useMemedTokenSale";
+import { usePricePerTokenWei } from "@/hooks/contracts/useMemedTokenSale";
 import { parseEther, formatEther, parseUnits, formatUnits } from "viem";
 import { useAccount } from "wagmi";
 import { useMemedTokenBalance } from "@/hooks/contracts/useMemedToken";
-import { usePaymentTokenBalance, usePaymentTokenInfo } from "@/hooks/contracts/usePaymentToken";
+import {
+  usePaymentTokenBalance,
+  usePaymentTokenInfo,
+} from "@/hooks/contracts/usePaymentToken";
 
 /**
  * Utility function to format large token amounts with K/M suffixes for better readability
@@ -64,15 +65,15 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
   const { address: userAddress } = useAccount();
 
   // Get payment token info (symbol and decimals) - used for buying tokens
-  const { symbol: paymentTokenSymbol, decimals: paymentTokenDecimals } = usePaymentTokenInfo();
+  const { symbol: paymentTokenSymbol, decimals: paymentTokenDecimals } =
+    usePaymentTokenInfo();
 
   // Get user's payment token balance for buying tokens (ERC20 token, not native ETH)
   const { data: paymentTokenBalance } = usePaymentTokenBalance();
 
   // Get user's MEME token balance for selling tokens (only if token deployed)
   const { data: memeTokenBalance } = useMemedTokenBalance(
-    tokenAddress as `0x${string}`,
-    userAddress,
+    tokenAddress as `0x${string}`
   );
 
   // Debounce the input amounts to avoid excessive hook calls
@@ -81,29 +82,33 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
 
   // Convert debounced amounts to bigint for the hooks
   // Buy amount: Use payment token decimals (dynamic from contract)
-  const buyAmountAsBigInt = debouncedBuyAmount && paymentTokenDecimals
-    ? parseUnits(debouncedBuyAmount as `${number}`, paymentTokenDecimals)
-    : 0n;
+  const buyAmountAsBigInt =
+    debouncedBuyAmount && paymentTokenDecimals
+      ? parseUnits(debouncedBuyAmount as `${number}`, paymentTokenDecimals)
+      : 0n;
   // Sell amount: Use 18 decimals (MEME token standard)
   const sellAmountAsBigInt = debouncedSellAmount
     ? parseEther(debouncedSellAmount as `${number}`)
     : 0n;
 
   // --- Contract Hooks ---
-  
+
   // Hook for getting the fixed price per token
-  const { data: pricePerTokenWei, isLoading: isLoadingPrice } = usePricePerTokenWei();
-  
+  const { data: pricePerTokenWei, isLoading: isLoadingPrice } =
+    usePricePerTokenWei();
+
   // Calculate buy preview: tokens = ethAmount / pricePerTokenWei
-  const buyPreviewAmount = pricePerTokenWei && buyAmountAsBigInt > 0n
-    ? (buyAmountAsBigInt * parseEther("1")) / pricePerTokenWei
-    : 0n;
-  
+  const buyPreviewAmount =
+    pricePerTokenWei && buyAmountAsBigInt > 0n
+      ? (buyAmountAsBigInt * parseEther("1")) / pricePerTokenWei
+      : 0n;
+
   // Calculate sell preview: eth = tokenAmount * pricePerTokenWei
-  const sellPreviewAmount = pricePerTokenWei && sellAmountAsBigInt > 0n
-    ? (sellAmountAsBigInt * pricePerTokenWei) / parseEther("1")
-    : 0n;
-  
+  const sellPreviewAmount =
+    pricePerTokenWei && sellAmountAsBigInt > 0n
+      ? (sellAmountAsBigInt * pricePerTokenWei) / parseEther("1")
+      : 0n;
+
   const isLoadingBuyPreview = isLoadingPrice;
   const isLoadingSellPreview = isLoadingPrice;
 
@@ -111,14 +116,24 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
 
   // Check if user has enough payment token to buy (memoized for performance)
   const hasEnoughPaymentTokenBalance = useMemo(() => {
-    if (!paymentTokenBalance || !buyAmount || parseFloat(buyAmount) <= 0 || !paymentTokenDecimals) return true; // Don't show error if no input
-    const buyAmountBigInt = parseUnits(buyAmount as `${number}`, paymentTokenDecimals);
+    if (
+      !paymentTokenBalance ||
+      !buyAmount ||
+      parseFloat(buyAmount) <= 0 ||
+      !paymentTokenDecimals
+    )
+      return true; // Don't show error if no input
+    const buyAmountBigInt = parseUnits(
+      buyAmount as `${number}`,
+      paymentTokenDecimals
+    );
     return paymentTokenBalance >= buyAmountBigInt;
   }, [paymentTokenBalance, buyAmount, paymentTokenDecimals]);
 
   // Check if user has enough MEME tokens to sell (memoized for performance)
   const hasEnoughMemeBalance = useMemo(() => {
-    if (!memeTokenBalance || !sellAmount || parseFloat(sellAmount) <= 0) return true; // Don't show error if no input
+    if (!memeTokenBalance || !sellAmount || parseFloat(sellAmount) <= 0)
+      return true; // Don't show error if no input
     const sellAmountBigInt = parseEther(sellAmount as `${number}`);
     return memeTokenBalance >= sellAmountBigInt;
   }, [memeTokenBalance, sellAmount]);
@@ -183,7 +198,9 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
   // Determine if submit button should be disabled
   const isSubmitDisabled =
     mode === "buy"
-      ? !buyAmount || parseFloat(buyAmount) <= 0 || !hasEnoughPaymentTokenBalance
+      ? !buyAmount ||
+        parseFloat(buyAmount) <= 0 ||
+        !hasEnoughPaymentTokenBalance
       : !sellAmount || parseFloat(sellAmount) <= 0 || !hasEnoughMemeBalance;
 
   return (
@@ -197,14 +214,18 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
         <button
           type="button"
           onClick={() => setMode("buy")}
-          className={`w-1/2 py-2 font-medium cursor-pointer ${mode === "buy" ? "bg-green-700/20 text-green-400" : "text-white"}`}
+          className={`w-1/2 py-2 font-medium cursor-pointer ${
+            mode === "buy" ? "bg-green-700/20 text-green-400" : "text-white"
+          }`}
         >
           Buy
         </button>
         <button
           type="button"
           onClick={() => setMode("sell")}
-          className={`w-1/2 py-2 font-medium cursor-pointer ${mode === "sell" ? "bg-red-700/20 text-red-400" : "text-white"}`}
+          className={`w-1/2 py-2 font-medium cursor-pointer ${
+            mode === "sell" ? "bg-red-700/20 text-red-400" : "text-white"
+          }`}
         >
           Sell
         </button>
@@ -237,7 +258,11 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
             {/* Display user's payment token balance */}
             {paymentTokenBalance !== undefined && paymentTokenDecimals ? (
               <div className="text-xs text-neutral-400 mt-1">
-                Your Balance: {formatTokenAmount(formatUnits(paymentTokenBalance, paymentTokenDecimals))} {paymentTokenSymbol || "Token"}
+                Your Balance:{" "}
+                {formatTokenAmount(
+                  formatUnits(paymentTokenBalance, paymentTokenDecimals)
+                )}{" "}
+                {paymentTokenSymbol || "Token"}
               </div>
             ) : (
               <div className="text-xs text-neutral-400 mt-1">
@@ -245,13 +270,15 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
               </div>
             )}
             {/* Warning for insufficient balance */}
-            {!hasEnoughPaymentTokenBalance && buyAmount && parseFloat(buyAmount) > 0 && (
-              <div className="bg-red-500/10 border border-red-500/50 p-2 rounded-md mt-2">
-                <p className="text-red-400 text-xs">
-                  ⚠️ Insufficient {paymentTokenSymbol || "token"} balance
-                </p>
-              </div>
-            )}
+            {!hasEnoughPaymentTokenBalance &&
+              buyAmount &&
+              parseFloat(buyAmount) > 0 && (
+                <div className="bg-red-500/10 border border-red-500/50 p-2 rounded-md mt-2">
+                  <p className="text-red-400 text-xs">
+                    ⚠️ Insufficient {paymentTokenSymbol || "token"} balance
+                  </p>
+                </div>
+              )}
           </div>
           <div className="text-center text-2xl text-neutral-400">↓</div>
           <div>
@@ -290,7 +317,8 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
             {/* Display user's MEME token balance */}
             {memeTokenBalance !== undefined ? (
               <div className="text-xs text-neutral-400 mt-1">
-                Your Balance: {formatTokenAmount(formatEther(memeTokenBalance))} MEME
+                Your Balance: {formatTokenAmount(formatEther(memeTokenBalance))}{" "}
+                MEME
               </div>
             ) : (
               <div className="text-xs text-neutral-400 mt-1">
@@ -298,13 +326,15 @@ export default function TradeForm({ tokenAddress }: TradeFormProps) {
               </div>
             )}
             {/* Warning for insufficient balance */}
-            {!hasEnoughMemeBalance && sellAmount && parseFloat(sellAmount) > 0 && (
-              <div className="bg-red-500/10 border border-red-500/50 p-2 rounded-md mt-2">
-                <p className="text-red-400 text-xs">
-                  ⚠️ Insufficient MEME token balance
-                </p>
-              </div>
-            )}
+            {!hasEnoughMemeBalance &&
+              sellAmount &&
+              parseFloat(sellAmount) > 0 && (
+                <div className="bg-red-500/10 border border-red-500/50 p-2 rounded-md mt-2">
+                  <p className="text-red-400 text-xs">
+                    ⚠️ Insufficient MEME token balance
+                  </p>
+                </div>
+              )}
           </div>
           <div className="text-center text-2xl text-neutral-400">↓</div>
           <div>

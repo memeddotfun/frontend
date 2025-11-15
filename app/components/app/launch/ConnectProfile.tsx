@@ -18,9 +18,13 @@ interface TokenData {
 export default function ConnectProfile({
   setStep,
   selectedAccount,
+  isMintable,
+  isMintableLoading,
 }: {
   setStep: (step: number) => void;
   selectedAccount: Account | null;
+  isMintable?: boolean;
+  isMintableLoading?: boolean;
 }) {
   const { user } = useAuthStore();
   const { mutate: connectSocial, loading: isConnecting } = useConnectSocial();
@@ -152,15 +156,31 @@ export default function ConnectProfile({
           )}
         </div>
 
+        {/* Mintable Status Warning */}
+        {!isMintableLoading && isMintable === false && (
+          <div className="mt-8 bg-red-500/10 border border-red-500 text-red-400 p-4 rounded-lg">
+            <h3 className="text-sm font-semibold mb-1">❌ Not Eligible to Launch</h3>
+            <p className="text-xs text-red-300">
+              Your wallet address is not currently eligible to launch tokens.
+              Please check the eligibility requirements or contact support for more information.
+            </p>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex justify-end mt-12 pt-8 border-t border-neutral-800">
           {!tokenData ? (
             <button
               onClick={() => setStep(2)}
-              disabled={!user?.socials || user.socials.length === 0}
+              disabled={
+                !user?.socials ||
+                user.socials.length === 0 ||
+                isMintableLoading ||
+                isMintable === false
+              }
               className="flex items-center gap-2 px-5 py-2.5 bg-green-500 rounded-md  text-black text-sm font-medium hover:shadow-2xl  cursor-pointer  transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Continue
+              {isMintableLoading ? "Checking eligibility..." : "Continue"}
               <ChevronRightIcon size={16} />
             </button>
           ) : (

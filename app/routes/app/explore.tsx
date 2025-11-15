@@ -30,6 +30,7 @@ export default function Explore() {
     image: token.metadata?.imageKey || meme, // Real image from metadata
     fairLaunchId: token.fairLaunchId, // Real fair launch ID
     address: token.address, // Token contract address (if deployed)
+    createdAt: token.createdAt, // Token creation timestamp for sorting
   }));
 
   // TODO: This is mock data and should be replaced by a loader

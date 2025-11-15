@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Flame, Timer, Rocket, XCircle } from "lucide-react";
 import { Link } from "react-router";
 import {
@@ -22,6 +23,8 @@ interface MemeTokenCardProps {
 }
 
 export function MemeTokenCard({ token }: MemeTokenCardProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   // Convert fairLaunchId to BigInt for contract calls
   const contractTokenId = token.fairLaunchId ? BigInt(token.fairLaunchId) : 0n;
 
@@ -40,11 +43,23 @@ export function MemeTokenCard({ token }: MemeTokenCardProps) {
       className="bg-neutral-900 rounded-xl p-2 sm:p-3 hover:bg-neutral-800 transition-colors cursor-pointer border border-neutral-800"
     >
       <div className="flex items-center gap-2 sm:gap-3">
-        <img
-          src={token.image} // Use the image from the token prop
-          alt={token.name}
-          className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg object-cover flex-shrink-0"
-        />
+        {/* Token Image with lazy loading and loading skeleton */}
+        <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 relative flex-shrink-0">
+          {/* Loading skeleton - shown while image loads */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-neutral-800 rounded-lg animate-pulse" />
+          )}
+
+          {/* Image with fixed aspect ratio and lazy loading */}
+          <img
+            src={token.image} // Use the image from the token prop
+            alt={token.name}
+            className="w-full h-full rounded-lg object-cover"
+            loading="lazy" // Lazy load images below fold
+            onLoad={() => setImageLoaded(true)}
+          />
+        </div>
+
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between mb-1 sm:mb-2">
             <div className="flex-1 overflow-hidden">
