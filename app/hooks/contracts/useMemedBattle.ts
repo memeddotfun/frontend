@@ -35,7 +35,68 @@ export function useGetBattle(battleId: bigint) {
 }
 
 /**
+ * Hook to get all battles for a specific token address.
+ * Returns battles where the token is either memeA or memeB.
+ * @param tokenAddress The address of the meme token
+ */
+export function useGetUserBattles(tokenAddress: `0x${string}` | undefined) {
+  return useReadContract({
+    address: BATTLE_ADDRESS,
+    abi: memedBattleAbi,
+    functionName: "getUserBattles",
+    args: tokenAddress ? [tokenAddress] : undefined,
+    query: {
+      enabled: !!tokenAddress,
+      refetchInterval: 10000, // Refetch every 10 seconds
+    },
+  });
+}
+
+/**
+ * Hook to get the battle cooldown status for a token.
+ * Returns cooldown data: {onBattle: bool, cooldownEndTime: uint256}
+ * @param tokenAddress The address of the meme token
+ */
+export function useGetBattleCooldown(tokenAddress: `0x${string}` | undefined) {
+  return useReadContract({
+    address: BATTLE_ADDRESS,
+    abi: memedBattleAbi,
+    functionName: "battleCooldowns",
+    args: tokenAddress ? [tokenAddress] : undefined,
+    query: {
+      enabled: !!tokenAddress,
+      refetchInterval: 5000, // Refetch every 5 seconds for live updates
+    },
+  });
+}
+
+/**
+ * Hook to read the BATTLE_COOLDOWN constant from the contract.
+ * Returns the cooldown duration in seconds.
+ */
+export function useGetBattleCooldownDuration() {
+  return useReadContract({
+    address: BATTLE_ADDRESS,
+    abi: memedBattleAbi,
+    functionName: "BATTLE_COOLDOWN",
+  });
+}
+
+/**
+ * Hook to read the BATTLE_DURATION constant from the contract.
+ * Returns the battle duration in seconds.
+ */
+export function useGetBattleDuration() {
+  return useReadContract({
+    address: BATTLE_ADDRESS,
+    abi: memedBattleAbi,
+    functionName: "BATTLE_DURATION",
+  });
+}
+
+/**
  * Hook for the `challengeBattle` write function.
+ * Creates a new battle challenge between two meme tokens.
  */
 export function useChallengeBattle() {
   const { data: hash, error, isPending, writeContract } = useWriteContract();
@@ -55,6 +116,31 @@ export function useChallengeBattle() {
     });
 
   return { challengeBattle, isPending, isConfirming, isConfirmed, hash, error };
+}
+
+/**
+ * Hook for the `acceptBattle` write function.
+ * Accepts a pending battle challenge, transitioning it from Pending to Active status.
+ * @returns Function to accept a battle and transaction states
+ */
+export function useAcceptBattle() {
+  const { data: hash, error, isPending, writeContract } = useWriteContract();
+
+  const acceptBattle = (battleId: bigint) => {
+    writeContract({
+      address: BATTLE_ADDRESS,
+      abi: memedBattleAbi,
+      functionName: "acceptBattle",
+      args: [battleId],
+    });
+  };
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
+
+  return { acceptBattle, isPending, isConfirming, isConfirmed, hash, error };
 }
 
 /**
