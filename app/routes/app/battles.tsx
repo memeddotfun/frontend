@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { formatEther } from "viem";
 import {
@@ -45,7 +45,9 @@ import { Search } from "lucide-react";
 // 1 = CHALLENGED (challenge sent, awaiting acceptance)
 // 2 = STARTED (battle active, NFT allocation happening)
 // 3 = RESOLVED (battle completed, winner determined)
-type BattleStatus = 0 | 1 | 2 | 3;
+// 4 = DRAW (battle ended in a draw)
+// 5 = REJECTED (challenge was rejected)
+type BattleStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
 // Battle data structure from contract
 interface Battle {
@@ -206,6 +208,14 @@ export default function Battles() {
     error: acceptError,
   } = useAcceptBattle();
 
+  // Track which battle is being accepted to hide it immediately
+  const [acceptingBattleId, setAcceptingBattleId] = useState<bigint | null>(null);
+  const [acceptedBattleIds, setAcceptedBattleIds] = useState<Set<bigint>>(new Set());
+
+  // Track which battle is being rejected
+  const [rejectingBattleId, setRejectingBattleId] = useState<bigint | null>(null);
+  const [rejectedBattleIds, setRejectedBattleIds] = useState<Set<bigint>>(new Set());
+
   // Battle filtering state
   const [statusFilter, setStatusFilter] = useState<"all" | BattleStatus>("all");
 
@@ -306,15 +316,42 @@ export default function Battles() {
       setSelectedMemeA(null);
       setSelectedMemeB(null);
     }
-  }, [isChallengeConfirmed, refetchBattles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChallengeConfirmed]);
 
   // Handle successful battle acceptance
   useEffect(() => {
-    if (isAcceptConfirmed) {
+    if (isAcceptConfirmed && acceptingBattleId !== null) {
+      // Add to accepted battles set to hide from pending challenges
+      setAcceptedBattleIds((prev) => new Set(prev).add(acceptingBattleId));
       // Refetch battles to update battle status from Pending to Active
       refetchBattles();
+      // Reset accepting battle ID after a delay to allow UI to update
+      setTimeout(() => setAcceptingBattleId(null), 1000);
     }
-  }, [isAcceptConfirmed, refetchBattles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAcceptConfirmed, acceptingBattleId]);
+
+  // Handle successful battle rejection
+  useEffect(() => {
+    if (isAcceptConfirmed && rejectingBattleId !== null) {
+      // Add to rejected battles set to hide from pending challenges
+      setRejectedBattleIds((prev) => new Set(prev).add(rejectingBattleId));
+      // Refetch battles to update battle status
+      refetchBattles();
+      // Reset rejecting battle ID after a delay to allow UI to update
+      setTimeout(() => setRejectingBattleId(null), 1000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAcceptConfirmed, rejectingBattleId]);
+
+  // Reset accepting/rejecting battle ID on error
+  useEffect(() => {
+    if (acceptError) {
+      setAcceptingBattleId(null);
+      setRejectingBattleId(null);
+    }
+  }, [acceptError]);
 
   // Handle successful NFT allocation
   useEffect(() => {
@@ -327,7 +364,8 @@ export default function Battles() {
       setAllocationBattle(null);
       setSupportingSide(null);
     }
-  }, [isAllocateConfirmed, refetchBattles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAllocateConfirmed]);
 
   // Real-time countdown timer - updates every second
   useEffect(() => {
@@ -369,8 +407,22 @@ export default function Battles() {
   // Handle token selection from modal
   const handleSelectToken = (token: TokenData) => {
     if (selectingFor === "memeA") {
+      // Prevent selecting same token for both A and B
+      if (selectedMemeB && selectedMemeB.address === token.address) {
+        alert(
+          "This token is already selected for Meme B. Please choose a different token."
+        );
+        return;
+      }
       setSelectedMemeA(token);
     } else if (selectingFor === "memeB") {
+      // Prevent selecting same token for both A and B
+      if (selectedMemeA && selectedMemeA.address === token.address) {
+        alert(
+          "This token is already selected for Meme A. Please choose a different token."
+        );
+        return;
+      }
       setSelectedMemeB(token);
     }
     setShowTokenSelector(false);
@@ -460,11 +512,26 @@ export default function Battles() {
       .map((t) => t.address?.toLowerCase()) || [];
 
   // Get pending challenges to the user's tokens (where user's token is challenged - Meme B)
+  // Exclude battles that are being accepted, rejected, or have been accepted/rejected
   const pendingChallenges = battles.filter(
     (battle) =>
       battle.status === 1 && // CHALLENGED status
-      userTokenAddresses.includes(battle.memeB.toLowerCase())
+      userTokenAddresses.includes(battle.memeB.toLowerCase()) &&
+      !acceptedBattleIds.has(battle.battleId) && // Not already accepted
+      !rejectedBattleIds.has(battle.battleId) // Not already rejected
   );
+
+  // Handler for accepting a battle
+  const handleAcceptBattle = (battleId: bigint) => {
+    setAcceptingBattleId(battleId);
+    acceptBattle(battleId, true);
+  };
+
+  // Handler for rejecting a battle
+  const handleRejectBattle = (battleId: bigint) => {
+    setRejectingBattleId(battleId);
+    acceptBattle(battleId, false);
+  };
 
   // Helper to get status label
   const getStatusLabel = (status: BattleStatus): string => {
@@ -477,6 +544,10 @@ export default function Battles() {
         return "Active";
       case 3:
         return "Resolved";
+      case 4:
+        return "Draw";
+      case 5:
+        return "Rejected";
       default:
         return "Unknown";
     }
@@ -493,6 +564,10 @@ export default function Battles() {
         return "bg-green-500/10 text-green-400 border-green-500/30";
       case 3:
         return "bg-neutral-500/10 text-neutral-400 border-neutral-500";
+      case 4:
+        return "bg-blue-500/10 text-blue-400 border-blue-500/30";
+      case 5:
+        return "bg-red-500/10 text-red-400 border-red-500/30";
       default:
         return "bg-neutral-500/10 text-neutral-400 border-neutral-500";
     }
@@ -529,7 +604,209 @@ export default function Battles() {
     return heatScore + nftScore;
   };
 
-  // console.log(battles);
+  // State to hold token details map
+  const [tokenDetailsMap, setTokenDetailsMap] = useState<
+    Record<
+      string,
+      { name: string; ticker: string; image: string; address: string }
+    >
+  >({});
+
+  // Effect to initialize token details when user data or battles load
+  useEffect(() => {
+    let cancelled = false; // To prevent state updates on unmounted components
+
+    const buildTokenDetailsMap = async () => {
+      const newTokenDetailsMap: Record<
+        string,
+        { name: string; ticker: string; image: string; address: `0x${string}` }
+      > = {};
+
+      // Add user's tokens first
+      if (user?.token && !cancelled) {
+        user.token.forEach((token) => {
+          if (token.address && !cancelled) {
+            const addressKey = token.address.toLowerCase();
+            newTokenDetailsMap[addressKey] = {
+              name:
+                token.metadata?.name ||
+                `${token.address.slice(0, 6)}...${token.address.slice(-4)}`,
+              ticker: token.metadata?.ticker || "???",
+              image:
+                token.image?.s3Key || (token.metadata as any)?.imageKey || "",
+              address: token.address as `0x${string}`,
+            };
+          }
+        });
+      }
+
+      // Combine all unique token addresses from battles to fetch additional details
+      if (battles && battles.length > 0 && !cancelled) {
+        const uniqueAddresses = new Set<string>();
+        battles.forEach((battle) => {
+          if (battle.memeA) uniqueAddresses.add(battle.memeA.toLowerCase());
+          if (battle.memeB) uniqueAddresses.add(battle.memeB.toLowerCase());
+        });
+
+        // Fetch details for tokens not in user's token list
+        for (const address of uniqueAddresses) {
+          if (cancelled) break;
+          const addressKey = address.toLowerCase();
+          console.log(addressKey);
+          if (!newTokenDetailsMap[addressKey]) {
+            try {
+              // Try to fetch token details by address from the API
+              console.log(
+                `Fetching token by address: /api/token-by-address/${address}`
+              );
+              const response = await apiClient.get(
+                `/api/token-by-address/${address}`
+              );
+              const responseData = response.data as any;
+
+              if (
+                responseData &&
+                responseData.metadata &&
+                typeof responseData.metadata === "object" &&
+                !cancelled
+              ) {
+                const tokenMetadata = responseData.metadata as {
+                  name?: string;
+                  ticker?: string;
+                  imageKey?: string;
+                };
+                console.log(
+                  `Successfully fetched token ${address} by address:`,
+                  responseData
+                );
+                newTokenDetailsMap[addressKey] = {
+                  name:
+                    tokenMetadata.name ||
+                    `${address.slice(0, 6)}...${address.slice(-4)}`,
+                  ticker: tokenMetadata.ticker || "???",
+                  image: tokenMetadata.imageKey || "",
+                  address: responseData.address || (address as `0x${string}`),
+                };
+              } else if (!cancelled) {
+                console.log(`Token ${address} not found via direct API call`);
+              }
+            } catch (error) {
+              if (cancelled) return;
+              // Fallback to fetching all tokens and filtering
+              try {
+                const allTokensResponse = await apiClient.get("/api/tokens");
+                console.log(
+                  "Fetching all tokens from /api/tokens endpoint:",
+                  allTokensResponse
+                );
+                // Type assertion for the response data
+                const allTokensData = allTokensResponse.data as
+                  | { tokens?: any[] }
+                  | any[];
+                const allTokens = Array.isArray(allTokensData)
+                  ? allTokensData
+                  : allTokensData && 'tokens' in allTokensData && Array.isArray(allTokensData.tokens)
+                  ? allTokensData.tokens
+                  : [];
+                console.log(
+                  "Fetched all tokens from /tokens endpoint:",
+                  allTokens
+                );
+                const tokenData = allTokens.find((t: any) => {
+                  // Type guard to check if the token object has an address property
+                  return (
+                    t &&
+                    typeof t === "object" &&
+                    "address" in t &&
+                    t.address &&
+                    typeof t.address === "string" &&
+                    t.address.toLowerCase() === addressKey
+                  );
+                });
+
+                if (
+                  tokenData &&
+                  tokenData.metadata &&
+                  typeof tokenData.metadata === "object" &&
+                  !cancelled
+                ) {
+                  const tokenMetadata = tokenData.metadata as {
+                    name?: string;
+                    ticker?: string;
+                    imageKey?: string;
+                  };
+                  console.log(
+                    `Found token ${address} in all tokens:`,
+                    tokenData
+                  );
+                  newTokenDetailsMap[addressKey] = {
+                    name:
+                      tokenMetadata.name ||
+                      `${address.slice(0, 6)}...${address.slice(-4)}`,
+                    ticker: tokenMetadata.ticker || "???",
+                    image: tokenMetadata.imageKey || "",
+                    address: tokenData.address || (address as `0x${string}`),
+                  };
+                } else if (!cancelled) {
+                  console.log(`Token ${address} not found in all tokens`);
+                  // If all methods fail, use address as fallback
+                  newTokenDetailsMap[addressKey] = {
+                    name: `${address.slice(0, 6)}...${address.slice(-4)}`,
+                    ticker: "???",
+                    image: "",
+                    address: address as `0x${string}`,
+                  };
+                }
+              } catch (fallbackError) {
+                if (!cancelled) {
+                  // If everything fails, use address as fallback
+                  newTokenDetailsMap[addressKey] = {
+                    name: `${address.slice(0, 6)}...${address.slice(-4)}`,
+                    ticker: "???",
+                    image: "",
+                    address: address as `0x${string}`,
+                  };
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (!cancelled) {
+        setTokenDetailsMap(newTokenDetailsMap);
+      }
+    };
+
+    buildTokenDetailsMap();
+
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.token, battles]);
+
+  // Synchronous helper function to get token details by address
+  const getTokenDetails = useCallback(
+    (address: `0x${string}`) => {
+      const addressKey = address.toLowerCase();
+
+      // First, try to find in the token details map
+      if (tokenDetailsMap[addressKey]) {
+        return tokenDetailsMap[addressKey];
+      }
+
+      // If not found in the map, return address as fallback
+      return {
+        name: `${address.slice(0, 6)}...${address.slice(-4)}`,
+        ticker: "???",
+        image: "",
+        address: address,
+      };
+    },
+    [tokenDetailsMap]
+  );
 
   return (
     <div className="min-h-screen text-white">
@@ -664,24 +941,87 @@ export default function Battles() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-4 mb-2">
-                          <div>
-                            <p className="text-xs text-neutral-500">
-                              Challenger Token
-                            </p>
-                            <p className="text-white font-mono text-sm">
-                              {battle.memeA.slice(0, 6)}...
-                              {battle.memeA.slice(-4)}
-                            </p>
+                          <div className="flex flex-col items-center">
+                            {(() => {
+                              const challengerDetails = getTokenDetails(
+                                battle.memeA
+                              );
+
+                              return (
+                                <div>
+                                  {challengerDetails.image ? (
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden mb-1">
+                                      <img
+                                        src={challengerDetails.image}
+                                        alt={challengerDetails.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-lg bg-neutral-700 flex items-center justify-center mb-1 text-xs">
+                                      {challengerDetails.name.substring(0, 3)}
+                                    </div>
+                                  )}
+                                  <p className="text-xs text-neutral-500">
+                                    Challenger
+                                  </p>
+                                  <p className="text-white font-semibold text-sm max-w-[80px] truncate">
+                                    {challengerDetails.name}
+                                  </p>
+                                  <p className="text-white font-mono text-xs">
+                                    {battle.memeA.slice(0, 6)}...
+                                    {battle.memeA.slice(-4)}
+                                  </p>
+                                </div>
+                              );
+                            })()}
                           </div>
-                          <span className="text-red-500 font-bold">VS</span>
-                          <div>
-                            <p className="text-xs text-neutral-500">
-                              Your Token
-                            </p>
-                            <p className="text-yellow-400 font-mono text-sm font-semibold">
-                              {battle.memeB.slice(0, 6)}...
-                              {battle.memeB.slice(-4)}
-                            </p>
+                          <span className="text-red-500 font-bold text-lg">
+                            VS
+                          </span>
+                          <div className="flex flex-col items-center">
+                            {(() => {
+                              const yourTokenDetails = getTokenDetails(
+                                battle.memeB
+                              );
+                              return (
+                                <div>
+                                  {yourTokenDetails.image ? (
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden mb-1">
+                                      <img
+                                        src={yourTokenDetails.image}
+                                        alt={yourTokenDetails.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-lg bg-neutral-700 flex items-center justify-center mb-1 text-xs">
+                                      {yourTokenDetails.name.substring(0, 3)}
+                                    </div>
+                                  )}
+                                  <p className="text-xs text-neutral-500">
+                                    Challenged
+                                  </p>
+                                  <p className="text-white font-semibold text-sm max-w-[80px] truncate">
+                                    {yourTokenDetails.name}
+                                  </p>
+                                  <p className="text-white font-mono text-xs">
+                                    {battle.memeB.slice(0, 6)}...
+                                    {battle.memeB.slice(-4)}
+                                  </p>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                         <div className="flex items-center gap-4 text-xs text-neutral-400">
@@ -696,11 +1036,16 @@ export default function Battles() {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => acceptBattle(battle.battleId)}
-                          disabled={isAcceptPending || isAcceptConfirming}
-                          className="bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 hover:border-green-500/60 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 text-green-400 px-4 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                          onClick={() => handleAcceptBattle(battle.battleId)}
+                          disabled={
+                            (acceptingBattleId === battle.battleId ||
+                              rejectingBattleId === battle.battleId) &&
+                            (isAcceptPending || isAcceptConfirming)
+                          }
+                          className="cursor-pointer bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 hover:border-green-500/60 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 text-green-400 px-4 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
                         >
-                          {isAcceptPending || isAcceptConfirming ? (
+                          {acceptingBattleId === battle.battleId &&
+                          (isAcceptPending || isAcceptConfirming) ? (
                             <>
                               <Loader2 className="w-4 h-4 animate-spin" />
                               {isAcceptPending ? "Confirm..." : "Accepting..."}
@@ -713,10 +1058,26 @@ export default function Battles() {
                           )}
                         </button>
                         <button
-                          className="bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white px-4 py-2 rounded-lg transition-colors text-sm"
-                          title="Challenge will auto-expire"
+                          onClick={() => handleRejectBattle(battle.battleId)}
+                          disabled={
+                            (acceptingBattleId === battle.battleId ||
+                              rejectingBattleId === battle.battleId) &&
+                            (isAcceptPending || isAcceptConfirming)
+                          }
+                          className="cursor-pointer bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 hover:border-red-500/60 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 text-red-400 px-4 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
                         >
-                          Ignore
+                          {rejectingBattleId === battle.battleId &&
+                          (isAcceptPending || isAcceptConfirming) ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              {isAcceptPending ? "Confirm..." : "Rejecting..."}
+                            </>
+                          ) : (
+                            <>
+                              <X className="w-4 h-4" />
+                              Reject
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -807,6 +1168,26 @@ export default function Battles() {
             >
               Completed ({battles.filter((b) => b.status === 3).length})
             </button>
+            <button
+              onClick={() => setStatusFilter(4)}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                statusFilter === 4
+                  ? "bg-green-600 text-white"
+                  : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700"
+              }`}
+            >
+              Draw ({battles.filter((b) => b.status === 4).length})
+            </button>
+            <button
+              onClick={() => setStatusFilter(5)}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                statusFilter === 5
+                  ? "bg-green-600 text-white"
+                  : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700"
+              }`}
+            >
+              Rejected ({battles.filter((b) => b.status === 5).length})
+            </button>
           </div>
 
           {/* Battles Grid - Loading State */}
@@ -878,29 +1259,54 @@ export default function Battles() {
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         {/* Meme A */}
                         <div className="text-center">
-                          <div className="bg-neutral-800 rounded-lg p-3 mb-2">
-                            <p className="text-xs text-neutral-500 mb-1">
-                              Meme A
-                            </p>
-                            <p className="text-white font-mono text-xs truncate">
-                              {battle.memeA.slice(0, 6)}...
-                              {battle.memeA.slice(-4)}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-center gap-1 text-xs">
-                              <Flame className="w-3 h-3 text-orange-400" />
-                              <span className="text-neutral-400">
-                                {Number(battle.heatA).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-center gap-1 text-xs">
-                              <Users className="w-3 h-3 text-blue-400" />
-                              <span className="text-neutral-400">
-                                {Number(battle.memeANftsAllocated)} NFTs
-                              </span>
-                            </div>
-                          </div>
+                          {(() => {
+                            const tokenDetails = getTokenDetails(battle.memeA);
+                            return (
+                              <div>
+                                {tokenDetails.image ? (
+                                  <div className="mx-auto mb-2 w-16 h-16 rounded-lg overflow-hidden">
+                                    <img
+                                      src={tokenDetails.image}
+                                      alt={tokenDetails.name}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (
+                                          e.target as HTMLImageElement
+                                        ).style.display = "none";
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="mx-auto mb-2 w-16 h-16 rounded-lg bg-neutral-700 flex items-center justify-center text-xs">
+                                    {tokenDetails.name.substring(0, 3)}
+                                  </div>
+                                )}
+                                <div className="bg-neutral-800 rounded-lg p-3 mb-2">
+                                  <p className="text-xs text-neutral-500 mb-1">
+                                    {tokenDetails.name}
+                                  </p>
+                                  <p className="text-white font-mono text-xs truncate">
+                                    {battle.memeA.slice(0, 6)}...
+                                    {battle.memeA.slice(-4)}
+                                  </p>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="flex items-center justify-center gap-1 text-xs">
+                                    <Flame className="w-3 h-3 text-orange-400" />
+                                    <span className="text-neutral-400">
+                                      {Number(battle.heatA).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-center gap-1 text-xs">
+                                    <Users className="w-3 h-3 text-blue-400" />
+                                    <span className="text-neutral-400">
+                                      {Number(battle.memeANftsAllocated)} NFTs
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* VS */}
@@ -912,29 +1318,54 @@ export default function Battles() {
 
                         {/* Meme B */}
                         <div className="text-center">
-                          <div className="bg-neutral-800 rounded-lg p-3 mb-2">
-                            <p className="text-xs text-neutral-500 mb-1">
-                              Meme B
-                            </p>
-                            <p className="text-white font-mono text-xs truncate">
-                              {battle.memeB.slice(0, 6)}...
-                              {battle.memeB.slice(-4)}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-center gap-1 text-xs">
-                              <Flame className="w-3 h-3 text-orange-400" />
-                              <span className="text-neutral-400">
-                                {Number(battle.heatB).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-center gap-1 text-xs">
-                              <Users className="w-3 h-3 text-blue-400" />
-                              <span className="text-neutral-400">
-                                {Number(battle.memeBNftsAllocated)} NFTs
-                              </span>
-                            </div>
-                          </div>
+                          {(() => {
+                            const tokenDetails = getTokenDetails(battle.memeB);
+                            return (
+                              <div>
+                                {tokenDetails.image ? (
+                                  <div className="mx-auto mb-2 w-16 h-16 rounded-lg overflow-hidden">
+                                    <img
+                                      src={tokenDetails.image}
+                                      alt={tokenDetails.name}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (
+                                          e.target as HTMLImageElement
+                                        ).style.display = "none";
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="mx-auto mb-2 w-16 h-16 rounded-lg bg-neutral-700 flex items-center justify-center text-xs">
+                                    {tokenDetails.name.substring(0, 3)}
+                                  </div>
+                                )}
+                                <div className="bg-neutral-800 rounded-lg p-3 mb-2">
+                                  <p className="text-xs text-neutral-500 mb-1">
+                                    {tokenDetails.name}
+                                  </p>
+                                  <p className="text-white font-mono text-xs truncate">
+                                    {battle.memeB.slice(0, 6)}...
+                                    {battle.memeB.slice(-4)}
+                                  </p>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="flex items-center justify-center gap-1 text-xs">
+                                    <Flame className="w-3 h-3 text-orange-400" />
+                                    <span className="text-neutral-400">
+                                      {Number(battle.heatB).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-center gap-1 text-xs">
+                                    <Users className="w-3 h-3 text-blue-400" />
+                                    <span className="text-neutral-400">
+                                      {Number(battle.memeBNftsAllocated)} NFTs
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -985,24 +1416,36 @@ export default function Battles() {
                           {/* Allocate NFTs button for active battles */}
                           {battle.status === 2 && address && (
                             <div className="flex gap-1">
-                              <button
-                                onClick={() =>
-                                  handleOpenAllocation(battle, "memeA")
-                                }
-                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded-lg transition-colors"
-                                title="Support Meme A"
-                              >
-                                Support A
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleOpenAllocation(battle, "memeB")
-                                }
-                                className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-2 rounded-lg transition-colors"
-                                title="Support Meme B"
-                              >
-                                Support B
-                              </button>
+                              {(() => {
+                                const memeADetails = getTokenDetails(
+                                  battle.memeA
+                                );
+                                const memeBDetails = getTokenDetails(
+                                  battle.memeB
+                                );
+                                return (
+                                  <>
+                                    <button
+                                      onClick={() =>
+                                        handleOpenAllocation(battle, "memeA")
+                                      }
+                                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded-lg transition-colors"
+                                      title={`Support ${memeADetails.name}`}
+                                    >
+                                      Support {memeADetails.name}
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleOpenAllocation(battle, "memeB")
+                                      }
+                                      className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-2 rounded-lg transition-colors"
+                                      title={`Support ${memeBDetails.name}`}
+                                    >
+                                      Support {memeBDetails.name}
+                                    </button>
+                                  </>
+                                );
+                              })()}
                             </div>
                           )}
                           <button
@@ -1189,21 +1632,45 @@ export default function Battles() {
                               : "Unknown",
                           };
 
-                          // Don't show already selected token
+                          // Check if token is already selected for the opposite slot
                           const isAlreadySelected =
                             (selectingFor === "memeA" &&
                               selectedMemeB?.address === token.address) ||
                             (selectingFor === "memeB" &&
                               selectedMemeA?.address === token.address);
 
-                          if (isAlreadySelected) return null;
+                          // Check if user would be creating a battle between their own tokens
+                          const isSameToken =
+                            selectingFor === "memeB" &&
+                            selectedMemeA &&
+                            selectedMemeA.address === token.address;
+
+                          // Check if user is trying to create a battle between two of their own tokens
+                          const isOwnTokenBattle =
+                            selectingFor === "memeB" && // When selecting for Meme B
+                            selectedMemeA && // And Meme A is already selected
+                            user?.token?.some(
+                              (t) =>
+                                t.address === selectedMemeA.address &&
+                                t.userId === user.id
+                            ) && // Meme A is user's token
+                            user?.token?.some(
+                              (t) =>
+                                t.address === token.address &&
+                                t.userId === user.id
+                            ); // Meme B is also user's token
 
                           // Check if token is in battle/cooldown
                           const battleStatus = getTokenBattleStatus(
                             token.address as `0x${string}`
                           );
                           const inBattle = !!battleStatus;
-                          const isDisabled = inBattle;
+                          const isDisabled = Boolean(
+                            inBattle ||
+                            isAlreadySelected ||
+                            isSameToken ||
+                            isOwnTokenBattle
+                          );
 
                           return (
                             <button
@@ -1212,6 +1679,17 @@ export default function Battles() {
                                 !isDisabled && handleSelectToken(tokenData)
                               }
                               disabled={isDisabled}
+                              title={
+                                isDisabled
+                                  ? isSameToken
+                                    ? "This token is already selected"
+                                    : isOwnTokenBattle
+                                    ? "Cannot battle against your own token"
+                                    : inBattle
+                                    ? "Token is currently in a battle"
+                                    : ""
+                                  : undefined
+                              }
                               className={`bg-neutral-800 rounded-xl p-4 border-2 transition-all relative ${
                                 isDisabled
                                   ? "border-neutral-700 opacity-50 cursor-not-allowed"
@@ -1289,8 +1767,22 @@ export default function Battles() {
                   </button>
                 </div>
                 <p className="text-sm text-neutral-400">
-                  Supporting {supportingSide === "memeA" ? "Meme A" : "Meme B"}{" "}
-                  in Battle #{Number(allocationBattle.battleId)}
+                  {(() => {
+                    const tokenAddress =
+                      supportingSide === "memeA"
+                        ? allocationBattle?.memeA
+                        : allocationBattle?.memeB;
+
+                    if (!tokenAddress)
+                      return `Supporting in Battle #${Number(
+                        allocationBattle?.battleId
+                      )}`;
+
+                    const tokenDetails = getTokenDetails(tokenAddress);
+                    return `Supporting ${tokenDetails.name} in Battle #${Number(
+                      allocationBattle.battleId
+                    )}`;
+                  })()}
                 </p>
               </div>
 
@@ -1458,104 +1950,154 @@ export default function Battles() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Meme A */}
                   <div className="bg-neutral-800 rounded-lg p-4 border-2 border-blue-500/30">
-                    <div className="text-center mb-4">
-                      <h3 className="text-lg font-semibold text-blue-400 mb-2">
-                        Meme A
-                      </h3>
-                      <p className="text-white font-mono text-sm break-all">
-                        {detailsBattle.memeA}
-                      </p>
-                    </div>
+                    {(() => {
+                      const tokenDetails = getTokenDetails(detailsBattle.memeA);
+                      return (
+                        <div>
+                          {tokenDetails.image ? (
+                            <div className="mx-auto mb-3 w-16 h-16 rounded-lg overflow-hidden">
+                              <img
+                                src={tokenDetails.image}
+                                alt={tokenDetails.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="mx-auto mb-3 w-16 h-16 rounded-lg bg-neutral-700 flex items-center justify-center text-xs">
+                              {tokenDetails.name.substring(0, 3)}
+                            </div>
+                          )}
+                          <div className="text-center mb-4">
+                            <h3 className="text-lg font-semibold text-blue-400 mb-2">
+                              {tokenDetails.name}
+                            </h3>
+                            <p className="text-white font-mono text-xs break-all">
+                              {detailsBattle.memeA.slice(0, 6)}...
+                              {detailsBattle.memeA.slice(-4)}
+                            </p>
+                          </div>
 
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-neutral-400">
-                          <Flame className="w-4 h-4 text-orange-400" />
-                          <span>Heat Score</span>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm text-neutral-400">
+                                <Flame className="w-4 h-4 text-orange-400" />
+                                <span>Heat Score</span>
+                              </div>
+                              <span className="text-white font-semibold">
+                                {Number(detailsBattle.heatA).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm text-neutral-400">
+                                <Users className="w-4 h-4 text-blue-400" />
+                                <span>NFTs Allocated</span>
+                              </div>
+                              <span className="text-white font-semibold">
+                                {Number(detailsBattle.memeANftsAllocated)}
+                              </span>
+                            </div>
+                            <div className="pt-3 border-t border-neutral-700">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-neutral-400">
+                                  Total Score
+                                </span>
+                                <span className="text-white font-bold text-lg">
+                                  {calculateBattleScore(
+                                    detailsBattle.heatA,
+                                    detailsBattle.memeANftsAllocated
+                                  ).toLocaleString(undefined, {
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                              </div>
+                              <p className="text-xs text-neutral-500 mt-1">
+                                (Heat × 60% + NFTs × 40%)
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-white font-semibold">
-                          {Number(detailsBattle.heatA).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-neutral-400">
-                          <Users className="w-4 h-4 text-blue-400" />
-                          <span>NFTs Allocated</span>
-                        </div>
-                        <span className="text-white font-semibold">
-                          {Number(detailsBattle.memeANftsAllocated)}
-                        </span>
-                      </div>
-                      <div className="pt-3 border-t border-neutral-700">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-neutral-400">
-                            Total Score
-                          </span>
-                          <span className="text-white font-bold text-lg">
-                            {calculateBattleScore(
-                              detailsBattle.heatA,
-                              detailsBattle.memeANftsAllocated
-                            ).toLocaleString(undefined, {
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                        </div>
-                        <p className="text-xs text-neutral-500 mt-1">
-                          (Heat × 60% + NFTs × 40%)
-                        </p>
-                      </div>
-                    </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Meme B */}
                   <div className="bg-neutral-800 rounded-lg p-4 border-2 border-purple-500/30">
-                    <div className="text-center mb-4">
-                      <h3 className="text-lg font-semibold text-purple-400 mb-2">
-                        Meme B
-                      </h3>
-                      <p className="text-white font-mono text-sm break-all">
-                        {detailsBattle.memeB}
-                      </p>
-                    </div>
+                    {(() => {
+                      const tokenDetails = getTokenDetails(detailsBattle.memeB);
+                      return (
+                        <div>
+                          {tokenDetails.image ? (
+                            <div className="mx-auto mb-3 w-16 h-16 rounded-lg overflow-hidden">
+                              <img
+                                src={tokenDetails.image}
+                                alt={tokenDetails.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="mx-auto mb-3 w-16 h-16 rounded-lg bg-neutral-700 flex items-center justify-center text-xs">
+                              {tokenDetails.name.substring(0, 3)}
+                            </div>
+                          )}
+                          <div className="text-center mb-4">
+                            <h3 className="text-lg font-semibold text-purple-400 mb-2">
+                              {tokenDetails.name}
+                            </h3>
+                            <p className="text-white font-mono text-xs break-all">
+                              {detailsBattle.memeB.slice(0, 6)}...
+                              {detailsBattle.memeB.slice(-4)}
+                            </p>
+                          </div>
 
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-neutral-400">
-                          <Flame className="w-4 h-4 text-orange-400" />
-                          <span>Heat Score</span>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm text-neutral-400">
+                                <Flame className="w-4 h-4 text-orange-400" />
+                                <span>Heat Score</span>
+                              </div>
+                              <span className="text-white font-semibold">
+                                {Number(detailsBattle.heatB).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm text-neutral-400">
+                                <Users className="w-4 h-4 text-blue-400" />
+                                <span>NFTs Allocated</span>
+                              </div>
+                              <span className="text-white font-semibold">
+                                {Number(detailsBattle.memeBNftsAllocated)}
+                              </span>
+                            </div>
+                            <div className="pt-3 border-t border-neutral-700">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-neutral-400">
+                                  Total Score
+                                </span>
+                                <span className="text-white font-bold text-lg">
+                                  {calculateBattleScore(
+                                    detailsBattle.heatB,
+                                    detailsBattle.memeBNftsAllocated
+                                  ).toLocaleString(undefined, {
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                              </div>
+                              <p className="text-xs text-neutral-500 mt-1">
+                                (Heat × 60% + NFTs × 40%)
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-white font-semibold">
-                          {Number(detailsBattle.heatB).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-neutral-400">
-                          <Users className="w-4 h-4 text-blue-400" />
-                          <span>NFTs Allocated</span>
-                        </div>
-                        <span className="text-white font-semibold">
-                          {Number(detailsBattle.memeBNftsAllocated)}
-                        </span>
-                      </div>
-                      <div className="pt-3 border-t border-neutral-700">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-neutral-400">
-                            Total Score
-                          </span>
-                          <span className="text-white font-bold text-lg">
-                            {calculateBattleScore(
-                              detailsBattle.heatB,
-                              detailsBattle.memeBNftsAllocated
-                            ).toLocaleString(undefined, {
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                        </div>
-                        <p className="text-xs text-neutral-500 mt-1">
-                          (Heat × 60% + NFTs × 40%)
-                        </p>
-                      </div>
-                    </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1698,24 +2240,32 @@ export default function Battles() {
                 {/* Action Buttons */}
                 {detailsBattle.status === 2 && address && (
                   <div className="flex gap-3">
-                    <button
-                      onClick={() => {
-                        setShowDetailsModal(false);
-                        handleOpenAllocation(detailsBattle, "memeA");
-                      }}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
-                    >
-                      Support Meme A
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowDetailsModal(false);
-                        handleOpenAllocation(detailsBattle, "memeB");
-                      }}
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
-                    >
-                      Support Meme B
-                    </button>
+                    {(() => {
+                      const memeADetails = getTokenDetails(detailsBattle.memeA);
+                      const memeBDetails = getTokenDetails(detailsBattle.memeB);
+                      return (
+                        <>
+                          <button
+                            onClick={() => {
+                              setShowDetailsModal(false);
+                              handleOpenAllocation(detailsBattle, "memeA");
+                            }}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
+                          >
+                            Support {memeADetails.name}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowDetailsModal(false);
+                              handleOpenAllocation(detailsBattle, "memeB");
+                            }}
+                            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
+                          >
+                            Support {memeBDetails.name}
+                          </button>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

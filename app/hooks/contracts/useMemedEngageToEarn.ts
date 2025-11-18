@@ -14,7 +14,7 @@ import { memedEngageToEarnAbi } from "@/abi";
  */
 export function useGetUserEngagementReward() {
   const { address } = useAccount();
-  console.log(address);
+  // console.log(address);
   return useReadContract({
     address: ENGAGE_TO_EARN_ADDRESS,
     abi: memedEngageToEarnAbi,

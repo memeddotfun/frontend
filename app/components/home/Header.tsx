@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
 import { ClientConnectButton } from "../shared/ClientConnectButton";
+import { useAuthStore } from "@/store/auth";
 import logo from "@/assets/images/logo.png";
 
 interface HeaderProps {
@@ -9,11 +10,13 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
+  const { isAuthenticated } = useAuthStore();
+
+  // Filter navigation items based on authentication
   const navItems = [
     { label: "About", href: "/about" },
-    // { label: "Explore", href: "/app/explore" },
     { label: "Contact", href: "/contact" },
-    { label: "Explore", href: "/explore" },
+    ...(isAuthenticated ? [{ label: "Explore", href: "/explore" }] : []),
   ];
 
   return (
@@ -32,7 +35,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
 
             <button
               onClick={onMenuToggle}
-              className="md:hidden p-2 text-green-500 hover:text-green-400 transition-colors"
+              className="md:hidden p-2 text-green-500 hover:text-green-400 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-black rounded"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -44,7 +47,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
               <Link
                 key={item.label}
                 to={item.href}
-                className="text-gray-300 hover:text-green-500 hover:border-b border-green-500 transition-colors font-medium"
+                className="text-gray-300 hover:text-green-500 hover:border-b border-green-500 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-black rounded-sm px-1"
               >
                 {item.label}
               </Link>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import type { Route } from "./+types/home";
 import { Header } from "@/components/home/Header";
 import { MobileMenu } from "@/components/home/MobileMenu";
@@ -14,12 +14,12 @@ export function meta({}: Route.MetaArgs) {
     {
       name: "description",
       content:
-        "Lens-powered meme token platform with bonding curve pricing, staking rewards, and battle mechanics. Create, stake, and battle with your meme tokens.",
+        "Web3 meme token platform with bonding curve pricing, staking rewards, and battle mechanics. Create, stake, and battle with your meme tokens.",
     },
     {
       name: "keywords",
       content:
-        "meme tokens, lens protocol, bonding curve, staking, web3, defi, memes",
+        "meme tokens, bonding curve, staking, web3, defi, memes, social tokens",
     },
     {
       property: "og:title",
@@ -28,7 +28,7 @@ export function meta({}: Route.MetaArgs) {
     {
       property: "og:description",
       content:
-        "Lens-powered meme token platform with bonding curve pricing, staking rewards, and battle mechanics.",
+        "Web3 meme token platform with bonding curve pricing, staking rewards, and battle mechanics.",
     },
     { property: "og:type", content: "website" },
     { property: "og:url", content: "https://memed.fun" },
@@ -40,23 +40,23 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black">
-      <Header 
+      <Header
         onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         isMenuOpen={isMobileMenuOpen}
       />
-      
-      <MobileMenu 
+
+      <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
       />
-      
+
       <main>
         <HeroSection />
-        <StatsSection />
+        {/*<StatsSection />*/}
         <TrendingMemes />
         <CTASection />
       </main>
-      
+
       <Footer />
     </div>
   );

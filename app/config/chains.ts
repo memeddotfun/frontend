@@ -8,11 +8,10 @@ export function getChainConfig() {
   const isDevelopment = env.isDevelopment;
 
   if (isDevelopment) {
-    // Development: Use both mainnet and testnet for testing
+    // Development: Use testnet only for safe testing
     return {
-      chains: [base, baseSepolia] as const,
+      chains: [baseSepolia] as const,
       transports: {
-        [base.id]: base.rpcUrls.default.http[0]!,
         [baseSepolia.id]: baseSepolia.rpcUrls.default.http[0]!,
       },
     };

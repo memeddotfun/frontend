@@ -13,8 +13,6 @@ export default function TokenSettingForm({
   memeTitle,
   setMemeTitle,
   memeDescription,
-  isMintable,
-  isMintableLoading,
 }: {
   handlePrevStep: () => void;
   handleMint: () => void;
@@ -26,8 +24,6 @@ export default function TokenSettingForm({
   memeTitle: string;
   setMemeTitle: (title: string) => void;
   memeDescription: string;
-  isMintable?: boolean;
-  isMintableLoading?: boolean;
 }) {
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [isSymbolDialogOpen, setIsSymbolDialogOpen] = useState(false);
@@ -202,19 +198,6 @@ export default function TokenSettingForm({
         </div>
       </div>
 
-      {/* Mintable Status Warning */}
-      {!isMintableLoading && isMintable === false && (
-        <div className="mt-8 bg-red-500/10 border border-red-500 text-red-400 p-4 rounded-lg">
-          <h3 className="text-sm font-semibold mb-1">
-            ❌ Not Eligible to Launch
-          </h3>
-          <p className="text-xs text-red-300">
-            Your wallet address is not currently eligible to launch tokens.
-            Please check the eligibility requirements.
-          </p>
-        </div>
-      )}
-
       {/* Footer with action buttons */}
       <div className="mt-10 pt-6 border-t border-neutral-700 flex flex-col sm:flex-row justify-between items-center gap-4">
         <button
@@ -244,12 +227,10 @@ export default function TokenSettingForm({
               isMinting ||
               !hasReviewed ||
               !memeTitle ||
-              !memeSymbol ||
-              isMintableLoading ||
-              isMintable === false
+              !memeSymbol
             }
           >
-            {isMintableLoading ? "Checking eligibility..." : getButtonText()}
+            {getButtonText()}
           </button>
         </div>
       </div>

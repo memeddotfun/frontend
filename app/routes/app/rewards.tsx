@@ -35,7 +35,7 @@ export default function EngagementRewards() {
     isLoading: isLoadingRewards,
     refetch: refetchRewards,
   } = useGetUserEngagementReward();
-  console.log(rewardsData);
+  //console.log(rewardsData);
   // Set default selected token when data loads
   useEffect(() => {
     if (!selectedTokenAddress && !isLoadingUser && !isLoadingRewards) {
@@ -131,6 +131,9 @@ export default function EngagementRewards() {
   // Track which reward is being claimed
   const [claimingRewardId, setClaimingRewardId] = useState<bigint | null>(null);
 
+  // Track claim in progress state to prevent button flicker
+  const [claimInProgress, setClaimInProgress] = useState(false);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -146,17 +149,26 @@ export default function EngagementRewards() {
     setCurrentPage(1);
   }, [selectedTokenAddress]);
 
+  // Set claim in progress when transaction starts
+  useEffect(() => {
+    if (isClaimPending || isClaimConfirming) {
+      setClaimInProgress(true);
+    }
+  }, [isClaimPending, isClaimConfirming]);
+
   // Refetch rewards after successful claim
   useEffect(() => {
     if (isClaimConfirmed) {
       refetchRewards();
       setClaimingRewardId(null);
+      setClaimInProgress(false);
     }
   }, [isClaimConfirmed, refetchRewards]);
 
   // Handle claim button click
   const handleClaim = (rewardId: bigint) => {
     setClaimingRewardId(rewardId);
+    setClaimInProgress(true);
     claimEngagementReward(rewardId);
   };
 
@@ -354,9 +366,8 @@ export default function EngagementRewards() {
                       </thead>
                       <tbody>
                         {paginatedRewards?.map((reward, index) => {
-                          const isClaimingThis =
-                            claimingRewardId === reward.rewardId &&
-                            (isClaimPending || isClaimConfirming);
+                          const isClaimingThis = claimingRewardId === reward.rewardId;
+                          const isProcessingThis = isClaimingThis && claimInProgress;
 
                           return (
                             <tr
@@ -396,10 +407,10 @@ export default function EngagementRewards() {
                               <td className="py-4 px-4 text-right">
                                 <button
                                   onClick={() => handleClaim(reward.rewardId)}
-                                  disabled={isClaimingThis}
+                                  disabled={isProcessingThis}
                                   className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-black cursor-pointer font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center justify-center gap-2 min-w-[100px]"
                                 >
-                                  {isClaimingThis ? (
+                                  {isProcessingThis ? (
                                     <>
                                       <Loader2 className="w-4 h-4 animate-spin" />
                                       <span className="hidden sm:inline">
@@ -504,105 +515,111 @@ export default function EngagementRewards() {
             </div>
 
             {/* Expected Battle Rewards Section (View Only) */}
-            {selectedTokenAddress && (
-              <div className="bg-neutral-900 rounded-lg p-6 border border-neutral-800 border-dashed">
-                <div className="flex items-center gap-3 mb-6">
-                  <Clock className="w-6 h-6 text-neutral-400" />
-                  <div>
-                    <h2 className="text-2xl font-semibold text-white">
-                      Expected Battle Rewards
-                    </h2>
-                    <p className="text-xs text-neutral-500 mt-1">
-                      View only - Pending rewards from ongoing battles
-                    </p>
+            <div className="bg-neutral-900 rounded-lg p-6 border border-neutral-800 border-dashed">
+              <div className="flex items-center gap-3 mb-6">
+                <Clock className="w-6 h-6 text-neutral-400" />
+                <div>
+                  <h2 className="text-2xl font-semibold text-white">
+                    Expected Battle Rewards
+                  </h2>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    View only - Pending rewards from ongoing battles
+                  </p>
+                </div>
+              </div>
+
+              {!selectedTokenAddress ? (
+                <div className="text-center py-8 text-neutral-500 text-sm">
+                  Please select a token to view rewards
+                </div>
+              ) : isLoadingBattleRewards ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                </div>
+              ) : battleRewards && battleRewards > 0n ? (
+                <div className="bg-neutral-800/50 rounded-lg p-6 border border-neutral-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Swords className="w-5 h-5 text-neutral-400" />
+                    <span className="text-sm text-neutral-400">
+                      Battle Winnings
+                    </span>
+                  </div>
+                  <div className="text-3xl font-bold text-white mb-2">
+                    ~{formatTokenAmount(formatEther(battleRewards))}{" "}
+                    {tokenName}
+                  </div>
+                  <div className="text-xs text-neutral-500">
+                    This is an estimate. Actual rewards will be available to
+                    claim through this page once battles complete.
                   </div>
                 </div>
-
-                {isLoadingBattleRewards ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-                  </div>
-                ) : battleRewards && battleRewards > 0n ? (
-                  <div className="bg-neutral-800/50 rounded-lg p-6 border border-neutral-700">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Swords className="w-5 h-5 text-neutral-400" />
-                      <span className="text-sm text-neutral-400">
-                        Battle Winnings
-                      </span>
-                    </div>
-                    <div className="text-3xl font-bold text-white mb-2">
-                      ~{formatTokenAmount(formatEther(battleRewards))}{" "}
-                      {tokenName}
-                    </div>
-                    <div className="text-xs text-neutral-500">
-                      This is an estimate. Actual rewards will be available to
-                      claim through this page once battles complete.
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-neutral-500 text-sm">
-                    No pending battle rewards
-                  </div>
-                )}
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-8 text-neutral-500 text-sm">
+                  No pending battle rewards
+                </div>
+              )}
+            </div>
 
             {/* Warrior Status Section */}
-            {selectedNftAddress && (
-              <div className="bg-neutral-900 rounded-lg p-6 border border-neutral-800">
-                <div className="flex items-center gap-3 mb-6">
-                  <Shield className="w-6 h-6 text-neutral-400" />
-                  <h2 className="text-2xl font-semibold text-white">
-                    Warrior Status
-                  </h2>
-                </div>
-
-                {isLoadingNFTs && !activeNFTs ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-                  </div>
-                ) : activeNFTs && activeNFTs.length > 0 ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-neutral-800 rounded-lg p-4 text-center">
-                        <div className="text-3xl font-bold text-green-500 mb-1">
-                          {activeNFTs.length}
-                        </div>
-                        <div className="text-sm text-neutral-400">
-                          Available Warriors
-                        </div>
-                      </div>
-                      <div className="bg-neutral-800 rounded-lg p-4 text-center">
-                        <div className="text-3xl font-bold text-neutral-400 mb-1">
-                          {/* This would require total NFT count - for now showing active */}
-                          {activeNFTs.length}
-                        </div>
-                        <div className="text-sm text-neutral-400">
-                          Total Warriors
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-xs text-neutral-500 mt-4">
-                      ✅ Your warriors are ready for battle allocation. NFTs are
-                      automatically returned after battles complete.
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Shield className="w-12 h-12 text-neutral-700 mx-auto mb-3" />
-                    <p className="text-neutral-400 text-sm mb-3">
-                      No warriors available for {tokenName}
-                    </p>
-                    <a
-                      href={`/explore/meme/${selectedToken?.id}/mint`}
-                      className="text-green-500 hover:text-green-400 text-sm underline"
-                    >
-                      Mint warriors to participate in battles
-                    </a>
-                  </div>
-                )}
+            <div className="bg-neutral-900 rounded-lg p-6 border border-neutral-800">
+              <div className="flex items-center gap-3 mb-6">
+                <Shield className="w-6 h-6 text-neutral-400" />
+                <h2 className="text-2xl font-semibold text-white">
+                  Warrior Status
+                </h2>
               </div>
-            )}
+
+              {!selectedNftAddress ? (
+                <div className="text-center py-8 text-neutral-500 text-sm">
+                  {!selectedTokenAddress
+                    ? "Please select a token to view warrior status"
+                    : "Loading warrior NFT data..."}
+                </div>
+              ) : isLoadingNFTs && !activeNFTs ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                </div>
+              ) : activeNFTs && activeNFTs.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-neutral-800 rounded-lg p-4 text-center">
+                      <div className="text-3xl font-bold text-green-500 mb-1">
+                        {activeNFTs.length}
+                      </div>
+                      <div className="text-sm text-neutral-400">
+                        Available Warriors
+                      </div>
+                    </div>
+                    <div className="bg-neutral-800 rounded-lg p-4 text-center">
+                      <div className="text-3xl font-bold text-neutral-400 mb-1">
+                        {/* This would require total NFT count - for now showing active */}
+                        {activeNFTs.length}
+                      </div>
+                      <div className="text-sm text-neutral-400">
+                        Total Warriors
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-4">
+                    ✅ Your warriors are ready for battle allocation. NFTs are
+                    automatically returned after battles complete.
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Shield className="w-12 h-12 text-neutral-700 mx-auto mb-3" />
+                  <p className="text-neutral-400 text-sm mb-3">
+                    No warriors available for {tokenName}
+                  </p>
+                  <a
+                    href={`/explore/meme/${selectedToken?.id}/mint`}
+                    className="text-green-500 hover:text-green-400 text-sm underline"
+                  >
+                    Mint warriors to participate in battles
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Column - Recent Activity */}

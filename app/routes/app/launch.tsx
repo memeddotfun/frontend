@@ -61,6 +61,11 @@ export default function LaunchPage() {
       toast.error("Please fill out all fields and upload an image.");
       return;
     }
+    // Final eligibility check as a safety measure
+    if (isMintable === false) {
+      toast.error("Your wallet is not eligible to launch tokens.");
+      return;
+    }
 
     try {
       // 1. Set signing state
@@ -242,8 +247,6 @@ export default function LaunchPage() {
                   memeTitle={memeTitle}
                   setMemeTitle={setMemeTitle}
                   memeDescription={memeDescription}
-                  isMintable={isMintable}
-                  isMintableLoading={isMintableLoading}
                 />
               )}
             </div>

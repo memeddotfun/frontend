@@ -12,19 +12,19 @@ export function Footer() {
     { label: "About", href: "/about" },
     { label: "Explore", href: "/explore" },
     { label: "Contact", href: "/contact" },
-    { label: "Launch App", href: "/app" },
+    // { label: "Launch App", href: "/app" },
   ];
 
   return (
-    <footer className=" border-green-500/20 bg-black/80 bg backdrop-blur-sm mt-10">
-      <div className=" mx-auto px-20 py-12">
+    <footer className="border-green-500/20 bg-black/80 backdrop-blur-sm mt-10">
+      <div className="mx-auto px-4 md:px-8 lg:px-20 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="flex flex-col items-center md:items-start">
             <Link to="/" className="flex items-center space-x-2 mb-4">
               <img
                 src={logo}
                 alt={"Memed.fun"}
-                className="w-[35px] h-35px] object-cover"
+                className="w-[35px] h-[35px] object-contain"
               />
               <span className="text-white font-bold text-lg">Memed</span>
             </Link>
@@ -35,7 +35,7 @@ export function Footer() {
               <Link
                 key={item.label}
                 to={item.href}
-                className="text-gray-400 hover:text-green-500 transition-colors text-sm"
+                className="text-gray-400 hover:text-green-500 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-green-500 rounded px-1"
               >
                 {item.label}
               </Link>
@@ -47,34 +47,34 @@ export function Footer() {
               href="https://t.me/memeddotfun"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-green-500 transition-colors"
+              className="p-2 text-gray-400 hover:text-green-500 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
               aria-label="Telegram"
             >
               <LiaTelegramPlane size={24} />
-            </a>{" "}
+            </a>
             <a
               href="https://github.com/memeddotfun"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-green-500 transition-colors"
+              className="p-2 text-gray-400 hover:text-green-500 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
               aria-label="Github"
             >
               <PiGithubLogo size={24} />
-            </a>{" "}
+            </a>
             <a
               href="https://instagram.com/memeddotfun"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-green-500 transition-colors"
+              className="p-2 text-gray-400 hover:text-green-500 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
               aria-label="Instagram"
             >
               <PiInstagramLogo size={24} />
-            </a>{" "}
+            </a>
             <a
               href="https://facebook.com/memeddotfun"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-green-500 transition-colors"
+              className="p-2 text-gray-400 hover:text-green-500 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
               aria-label="Facebook"
             >
               <CiFacebook size={24} />
@@ -83,7 +83,7 @@ export function Footer() {
               href="https://x.com/memeddotfun"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-green-500 transition-colors"
+              className="p-2 text-gray-400 hover:text-green-500 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
               aria-label="Twitter"
             >
               <FaXTwitter size={22} />
@@ -92,19 +92,19 @@ export function Footer() {
               href="https://discord.gg/b9PfQwCsdG"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-green-500 transition-colors"
-              aria-label="Telegram"
+              className="p-2 text-gray-400 hover:text-green-500 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+              aria-label="Discord"
             >
               <AiOutlineDiscord size={26} />
             </a>
           </div>
         </div>
       </div>
-      <div className=" mx-auto px-20 py-3  border-t border-gray-700">
+      <div className="mx-auto px-4 md:px-8 lg:px-20 py-3 border-t border-gray-700">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="flex flex-col items-center md:items-start">
-            <p className="text-sm text-gray-400 text-center md:text-left">
-              © 2024 Memed.fun. All rights reserved.
+            <p className="text-sm text-gray-400 text-center md:text-left" suppressHydrationWarning>
+              © {new Date().getFullYear()} Memed.fun. All rights reserved.
             </p>
           </div>
         </div>

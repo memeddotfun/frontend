@@ -1,25 +1,68 @@
-import { TrendingUp, Swords, DollarSign } from 'lucide-react';
+import { TrendingUp, Swords, DollarSign, Loader2 } from 'lucide-react';
 import { StatCard } from './StatCard';
+import { usePlatformStats } from '@/hooks/api/useMemedApi';
+
+// Helper function to format numbers with K, M notation
+const formatNumber = (num: number): string => {
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1)}M`;
+  }
+  if (num >= 1_000) {
+    return `${(num / 1_000).toFixed(1)}K`;
+  }
+  return num.toString();
+};
+
+// Helper function to format currency values
+const formatCurrency = (value: string): string => {
+  const num = parseFloat(value);
+  if (isNaN(num)) return '$0';
+
+  if (num >= 1_000_000) {
+    return `$${(num / 1_000_000).toFixed(2)}M`;
+  }
+  if (num >= 1_000) {
+    return `$${(num / 1_000).toFixed(2)}K`;
+  }
+  return `$${num.toFixed(2)}`;
+};
 
 export function StatsSection() {
+  // Fetch real platform statistics
+  const { data: platformStats, isLoading, error } = usePlatformStats();
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <section className="py-20 px-4">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-green-500" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Fallback to default stats if no data or error
   const stats = [
     {
       icon: <TrendingUp size={20} />,
-      label: 'Circulating Supply',
-      value: '1.2M MEME',
-      change: '+6.2% today',
+      label: 'Total Tokens',
+      value: platformStats ? formatNumber(platformStats.totalTokens) : '0',
+      change: platformStats ? `${platformStats.totalUsers} holders` : 'Getting started',
     },
     {
       icon: <Swords size={20} />,
       label: 'Active Battles',
-      value: '420',
-      change: '44 new today',
+      value: platformStats ? platformStats.activeBattles.toString() : '0',
+      change: 'Live now',
     },
     {
       icon: <DollarSign size={20} />,
-      label: 'Avg Price',
-      value: '$0.0042',
-      change: '+5.2% today',
+      label: 'Total Volume',
+      value: platformStats ? formatCurrency(platformStats.totalVolume) : '$0',
+      change: 'All time',
     },
   ];
 

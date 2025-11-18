@@ -48,6 +48,56 @@ export const memedBattleAbi = [
       {
         indexed: false,
         internalType: "address",
+        name: "memeA",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "memeB",
+        type: "address",
+      },
+    ],
+    name: "BattleDraw",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "battleId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "memeA",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "memeB",
+        type: "address",
+      },
+    ],
+    name: "BattleRejected",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "battleId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
         name: "winner",
         type: "address",
       },
@@ -284,8 +334,11 @@ export const memedBattleAbi = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "uint256", name: "_battleId", type: "uint256" }],
-    name: "acceptBattle",
+    inputs: [
+      { internalType: "uint256", name: "_battleId", type: "uint256" },
+      { internalType: "bool", name: "_accept", type: "bool" },
+    ],
+    name: "acceptOrRejectBattle",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -298,15 +351,6 @@ export const memedBattleAbi = [
       { internalType: "uint256[]", name: "_nftsIds", type: "uint256[]" },
     ],
     name: "allocateNFTsToBattle",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "uint256[]", name: "_battleIds", type: "uint256[]" },
-    ],
-    name: "batchClaimRewards",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

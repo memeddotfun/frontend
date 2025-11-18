@@ -1,8 +1,11 @@
 import { Link } from "react-router";
 import { MoveUpRight } from "lucide-react";
+import { useAuthStore } from "@/store/auth";
 import footerImage from "@/assets/images/footerboxes.svg";
 
 export function CTASection() {
+  const { isAuthenticated } = useAuthStore();
+
   return (
     <section
       className="py-20 px-4 relative overflow-hidden"
@@ -19,16 +22,16 @@ export function CTASection() {
             into real rewards ?
           </h2>
 
-          <p className="text-lg text-gray-400 mb-8">
-            Join the Web3 meme economy where every like, mirror, and quote earns
-            you meme tokens. Stake, battle, and go viral — all on-chain.
+          <p className="text-lg text-gray-300 mb-8">
+            Join the Web3 meme economy where every like, share, and comment
+            earns you meme tokens. Stake, battle, and go viral — all on-chain.
           </p>
 
           <Link
-            to="/launch"
-            className="inline-flex items-center px-8 py-4 bg-black text-white border border-green-700  rounded-full hover:bg-green-700 transition-colors group"
+            to={isAuthenticated ? "/explore" : "/about"}
+            className="inline-flex items-center px-8 py-4 bg-black text-white border border-green-700 rounded-full hover:bg-green-700 transition-colors group focus:outline-none focus:ring-4 focus:ring-green-500/50"
           >
-            Launch App
+            {isAuthenticated ? "Explore Tokens" : "Learn More"}
             <MoveUpRight
               size={15}
               className="ml-2 group-hover:translate-x-1 transition-transform"

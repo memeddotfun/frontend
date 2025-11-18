@@ -119,19 +119,19 @@ export function useChallengeBattle() {
 }
 
 /**
- * Hook for the `acceptBattle` write function.
- * Accepts a pending battle challenge, transitioning it from Pending to Active status.
- * @returns Function to accept a battle and transaction states
+ * Hook for the `acceptOrRejectBattle` write function.
+ * Accepts or rejects a pending battle challenge.
+ * @returns Function to accept/reject a battle and transaction states
  */
 export function useAcceptBattle() {
   const { data: hash, error, isPending, writeContract } = useWriteContract();
 
-  const acceptBattle = (battleId: bigint) => {
+  const acceptBattle = (battleId: bigint, accept: boolean = true) => {
     writeContract({
       address: BATTLE_ADDRESS,
       abi: memedBattleAbi,
-      functionName: "acceptBattle",
-      args: [battleId],
+      functionName: "acceptOrRejectBattle",
+      args: [battleId, accept],
     });
   };
 

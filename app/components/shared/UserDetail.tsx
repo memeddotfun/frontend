@@ -1,5 +1,6 @@
 import { User, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useAuthStore } from "@/store/auth";
 
 interface UserDetailProps {
   onDisconnect: () => void;
@@ -7,8 +8,13 @@ interface UserDetailProps {
 }
 
 export function UserDetail({ onDisconnect, isDisconnecting }: UserDetailProps) {
+  const { user } = useAuthStore();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Get display name and username from user data
+  const displayName = user?.name || user?.address?.slice(0, 6) + "..." + user?.address?.slice(-4) || "User";
+  const username = user?.username ? `@${user.username}` : (user?.address ? `${user.address.slice(0, 6)}...${user.address.slice(-4)}` : "@user");
 
   const toggleDropdown = () => {
     if (!isDisconnecting) {
@@ -51,8 +57,8 @@ export function UserDetail({ onDisconnect, isDisconnecting }: UserDetailProps) {
           <User className="w-4 h-4 text-white" />
         </div>
         <div>
-          <div className="text-white text-sm font-medium">John Doe</div>
-          <div className="text-gray-400 text-xs"> @johndoe</div>
+          <div className="text-white text-sm font-medium">{displayName}</div>
+          <div className="text-gray-400 text-xs">{username}</div>
         </div>
         {isDisconnecting ? (
           <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />

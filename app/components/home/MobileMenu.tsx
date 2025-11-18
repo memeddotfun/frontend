@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { X, MessageCircle, Twitter } from "lucide-react";
 import { ClientConnectButton } from "../shared/ClientConnectButton";
+import { useAuthStore } from "@/store/auth";
 import logo from "@/assets/images/logo.png";
 
 interface MobileMenuProps {
@@ -9,11 +10,13 @@ interface MobileMenuProps {
 }
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
+  const { isAuthenticated } = useAuthStore();
+
+  // Filter navigation items based on authentication
   const navItems = [
-    { label: "Launch App", href: "/app" },
     { label: "About", href: "/about" },
-    // { label: "Explore", href: "/app/explore" },
     { label: "Contact", href: "/contact" },
+    ...(isAuthenticated ? [{ label: "Explore", href: "/explore" }] : []),
   ];
 
   return (
@@ -56,7 +59,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   key={item.label}
                   to={item.href}
                   onClick={onClose}
-                  className="block py-2 text-gray-300 hover:text-green-500 hover:border-b border-green-500 transition-colors font-medium"
+                  className="block py-2 text-gray-300 hover:text-green-500 hover:border-b border-green-500 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-black rounded px-2"
                 >
                   {item.label}
                 </Link>
@@ -74,7 +77,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 href="https://twitter.com/memed"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-gray-400 hover:text-green-500 transition-colors"
+                className="p-2 text-gray-400 hover:text-green-500 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
                 aria-label="Twitter"
               >
                 <svg
@@ -91,7 +94,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 href="https://t.me/memed"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-gray-400 hover:text-green-500 transition-colors"
+                className="p-2 text-gray-400 hover:text-green-500 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
                 aria-label="Telegram"
               >
                 <MessageCircle size={24} />
