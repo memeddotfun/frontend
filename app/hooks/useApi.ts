@@ -1,62 +1,148 @@
 /**
- * useApi Hook - Standard data fetching hook for Memed.fun
- * 
- * This module provides a comprehensive set of React hooks for API communication
- * with built-in features including:
- * - Type-safe API calls with TypeScript generics
- * - Automatic caching with configurable TTL
- * - Request deduplication and cancellation
- * - Error handling and retry logic
- * - Optimistic updates for better UX
- * - Loading states and error boundaries
- * 
- * @example Basic usage:
+ * USE API HOOK - React Hooks for Data Fetching with Caching
+ *
+ * This file provides custom React hooks for fetching and managing data from our backend.
+ * It's built on top of the HTTP client (client.ts) and adds React-specific features.
+ *
+ * ============================================================================
+ * FOR JUNIOR DEVELOPERS: REACT HOOKS BASICS
+ * ============================================================================
+ *
+ * WHAT ARE REACT HOOKS?
+ * - Functions that "hook into" React features (state, lifecycle, etc.)
+ * - Always start with "use" (useState, useEffect, useApi, etc.)
+ * - Only work inside React components or other hooks
+ * - Make it easy to reuse stateful logic across components
+ *
+ * WHY CUSTOM HOOKS?
+ * - Avoid duplicating data fetching logic in every component
+ * - Provide consistent error handling and loading states
+ * - Add features like caching, retries, optimistic updates
+ * - Make components cleaner and easier to read
+ *
+ * EXAMPLE WITHOUT CUSTOM HOOK (BAD):
  * ```tsx
- * const { data, loading, error } = useApi<User[]>('/users');
+ * function TokenList() {
+ *   const [tokens, setTokens] = useState([]);
+ *   const [loading, setLoading] = useState(false);
+ *   const [error, setError] = useState(null);
+ *
+ *   useEffect(() => {
+ *     setLoading(true);
+ *     fetch('/api/tokens')
+ *       .then(res => res.json())
+ *       .then(data => setTokens(data))
+ *       .catch(err => setError(err))
+ *       .finally(() => setLoading(false));
+ *   }, []);
+ *
+ *   // ... render logic
+ * }
  * ```
- * 
- * @example With caching:
+ *
+ * EXAMPLE WITH CUSTOM HOOK (GOOD):
  * ```tsx
- * const { data } = useApi<Token[]>('/tokens', {
- *   cacheKey: 'tokens-list',
- *   cacheDuration: CACHE_CONFIG.MEDIUM
- * });
+ * function TokenList() {
+ *   const { data: tokens, loading, error } = useApi('/api/tokens', { immediate: true });
+ *   // ... render logic
+ * }
  * ```
+ *
+ * ============================================================================
+ * HOOKS PROVIDED IN THIS FILE
+ * ============================================================================
+ *
+ * 1. useApi - Fetch data (GET requests) with caching
+ * 2. useApiMutation - Create/Update/Delete data (POST/PUT/PATCH/DELETE)
+ * 3. useOptimisticApi - Update UI immediately before server confirms
+ *
+ * @see client.ts for HTTP implementation
+ * @see config.ts for API endpoints and cache configuration
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient, type ApiResponse, type RequestConfig } from '../lib/api/client';
 import { CACHE_CONFIG } from '../lib/api/config';
 
+// ==========================================
+// TYPESCRIPT TYPES
+// ==========================================
+
 /**
- * Options for the useApi hook
- * 
- * @typedef {Object} UseApiOptions
- * @property {boolean} [immediate=false] - Auto-fetch on mount
- * @property {React.DependencyList} [deps=[]] - Dependencies to trigger refetch
- * @property {string} [cacheKey] - Cache key for request deduplication
- * @property {number} [cacheDuration=5 * 60 * 1000] - Cache duration in milliseconds
- * @property {(data: T) => R} [transform] - Transform response data
- * @property {(error: Error) => void} [onError] - Error handler
- * @property {(data: T) => void} [onSuccess] - Success handler
+ * USE API OPTIONS TYPE
+ *
+ * Configuration options for the useApi hook.
+ * Extends RequestConfig from the HTTP client to inherit timeout, retries, etc.
+ *
+ * GENERIC TYPE <T>:
+ * - T is the type of data you expect from the API
+ * - Example: UseApiOptions<Token[]> for fetching an array of tokens
+ *
+ * KEY OPTIONS EXPLAINED:
+ *
+ * 1. immediate (boolean):
+ *    - If true, fetches data as soon as component mounts
+ *    - If false (default), you must call execute() manually
+ *    - Example: { immediate: true } - auto-load on mount
+ *
+ * 2. deps (array):
+ *    - Like useEffect dependencies - refetches when these values change
+ *    - Example: { deps: [userId] } - refetch when userId changes
+ *    - WARNING: Be careful with this to avoid infinite loops!
+ *
+ * 3. cacheKey (string):
+ *    - Unique identifier for caching this request
+ *    - If provided, response is cached for faster subsequent loads
+ *    - Example: { cacheKey: 'token-list' }
+ *
+ * 4. cacheDuration (milliseconds):
+ *    - How long to keep cached data before fetching again
+ *    - Default: 5 minutes (300,000 ms)
+ *    - Example: { cacheDuration: CACHE_CONFIG.LONG } - 30 minutes
+ *
+ * 5. transform (function):
+ *    - Modify the response data before storing in state
+ *    - Useful for formatting dates, filtering data, etc.
+ *    - Example: { transform: (data) => data.filter(t => t.active) }
+ *
+ * 6. onSuccess / onError (callbacks):
+ *    - Functions called after successful/failed requests
+ *    - Useful for showing notifications, logging, etc.
+ *    - Example: { onSuccess: () => toast.success('Loaded!') }
  */
 export interface UseApiOptions extends RequestConfig {
-  // Auto-fetch on mount
+  /** Auto-fetch on mount (default: false) */
   immediate?: boolean;
-  // Dependencies to trigger refetch
+  /** Dependencies to trigger refetch (like useEffect deps) */
   deps?: React.DependencyList;
-  // Cache key for request deduplication
+  /** Cache key for request deduplication */
   cacheKey?: string;
-  // Cache duration in milliseconds
+  /** Cache duration in milliseconds (default: 5 minutes) */
   cacheDuration?: number;
-  // Transform response data
+  /** Transform response data before storing */
   transform?<T, R>(data: T): R;
-  // Error handler
+  /** Called when request fails */
   onError?: (error: Error) => void;
-  // Success handler
+  /** Called when request succeeds */
   onSuccess?: <T>(data: T) => void;
 }
 
+/**
+ * USE API STATE TYPE
+ *
+ * The internal state shape of the useApi hook.
+ * Tracks data, loading status, errors, and success flag.
+ *
+ * GENERIC TYPE <T>:
+ * - T is the type of data you expect from the API
+ * - data is T | null (null until data loads)
+ *
+ * STATE FIELDS:
+ * - data: The response data (null if not loaded yet)
+ * - loading: True while request is in flight
+ * - error: Error object if request failed (null otherwise)
+ * - success: True if request succeeded
+ */
 export interface UseApiState<T> {
   data: T | null;
   loading: boolean;
@@ -64,6 +150,26 @@ export interface UseApiState<T> {
   success: boolean;
 }
 
+/**
+ * USE API RETURN TYPE
+ *
+ * What the useApi hook returns to your component.
+ * Includes all state fields plus control functions.
+ *
+ * CONTROL FUNCTIONS:
+ * - execute(): Manually trigger a fetch
+ * - reset(): Clear state (data, error, loading)
+ * - refetch(): Re-fetch data (alias for execute)
+ *
+ * USAGE EXAMPLE:
+ * ```tsx
+ * const { data, loading, error, execute, reset } = useApi('/api/tokens');
+ *
+ * if (loading) return <Spinner />;
+ * if (error) return <ErrorMessage error={error} />;
+ * return <TokenList tokens={data} onRefresh={execute} />;
+ * ```
+ */
 export interface UseApiReturn<T> extends UseApiState<T> {
   execute: () => Promise<void>;
   reset: () => void;

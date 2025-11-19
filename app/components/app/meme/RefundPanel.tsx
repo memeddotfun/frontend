@@ -113,7 +113,19 @@ const RefundPanel = ({ tokenId, tokenName = "Token" }: RefundPanelProps) => {
   return (
     <div className="bg-neutral-900 p-6 rounded-xl w-full space-y-4">
       <h2 className="text-white text-lg font-semibold flex gap-2 items-center">
-        <RefreshCcw className="text-yellow-500" /> Refund Available
+        {hasRefundAvailable ? (
+          <>
+            <RefreshCcw className="text-yellow-500" /> Refund Available
+          </>
+        ) : alreadyRefunded ? (
+          <>
+            <CheckCircle className="text-green-500" /> Refund Claimed
+          </>
+        ) : (
+          <>
+            <RefreshCcw className="text-neutral-500" /> No Refund Available
+          </>
+        )}
       </h2>
 
       {/* Launch Failed Notice with Detailed Reason */}

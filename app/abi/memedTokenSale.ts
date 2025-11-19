@@ -19,6 +19,27 @@ export const memedTokenSaleAbi = [
       {
         indexed: false,
         internalType: "uint256",
+        name: "tokens",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "refund",
+        type: "uint256",
+      },
+    ],
+    name: "Claimed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
+      { indexed: true, internalType: "address", name: "user", type: "address" },
+      {
+        indexed: false,
+        internalType: "uint256",
         name: "amount",
         type: "uint256",
       },
@@ -86,35 +107,6 @@ export const memedTokenSaleAbi = [
       },
     ],
     name: "FairLaunchFailed",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
-    ],
-    name: "FairLaunchReadyToComplete",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "creator",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "start",
-        type: "uint256",
-      },
-      { indexed: false, internalType: "uint256", name: "end", type: "uint256" },
-    ],
-    name: "FairLaunchStarted",
     type: "event",
   },
   {
@@ -249,6 +241,26 @@ export const memedTokenSaleAbi = [
     type: "function",
   },
   {
+    inputs: [{ internalType: "uint256", name: "_id", type: "uint256" }],
+    name: "finalizeSale",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "_id", type: "uint256" },
+      { internalType: "address", name: "user", type: "address" },
+    ],
+    name: "getExpectedClaim",
+    outputs: [
+      { internalType: "uint256", name: "tokens", type: "uint256" },
+      { internalType: "uint256", name: "refundAmount", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "address", name: "_t", type: "address" }],
     name: "getFairLaunchActive",
     outputs: [{ internalType: "bool", name: "", type: "bool" }],
@@ -261,13 +273,6 @@ export const memedTokenSaleAbi = [
     outputs: [
       { internalType: "enum FairLaunchStatus", name: "", type: "uint8" },
     ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "_id", type: "uint256" }],
-    name: "getMaxCommittableETH",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
@@ -297,6 +302,13 @@ export const memedTokenSaleAbi = [
     inputs: [],
     name: "id",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_id", type: "uint256" }],
+    name: "isCompletable",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
     stateMutability: "view",
     type: "function",
   },
@@ -341,7 +353,7 @@ export const memedTokenSaleAbi = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "uint256", name: "tokens", type: "uint256" }],
+    inputs: [{ internalType: "uint256", name: "tokenAmount", type: "uint256" }],
     name: "quoteNetForTokens",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "pure",
@@ -371,7 +383,10 @@ export const memedTokenSaleAbi = [
   {
     inputs: [{ internalType: "address", name: "_creator", type: "address" }],
     name: "startFairLaunch",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    outputs: [
+      { internalType: "uint256", name: "", type: "uint256" },
+      { internalType: "uint256", name: "", type: "uint256" },
+    ],
     stateMutability: "nonpayable",
     type: "function",
   },

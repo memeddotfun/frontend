@@ -1,0 +1,557 @@
+{
+  "codebaseCommentingAnalysis": {
+    "projectName": "Memed.fun",
+    "totalFilesToComment": 120,
+    "analysisDate": "2025-11-18",
+    "categories": {
+      "coreAppFiles": {
+        "name": "Core App Files (Root & Layout)",
+        "priority": "HIGH",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/root.tsx",
+            "purpose": "App entry point and error boundary",
+            "complexity": "HIGH",
+            "needsComments": ["Layout pattern explanation", "ErrorBoundary purpose", "useAuthStore.verifySession flow"],
+            "linesOfCode": 80
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/abi.ts",
+            "purpose": "Central ABI imports management",
+            "complexity": "MEDIUM",
+            "needsComments": ["What each ABI is used for", "How to add new contracts"]
+          }
+        ]
+      },
+      "providers": {
+        "name": "Providers & Web3 Setup",
+        "priority": "HIGH",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/providers/Web3Provider.tsx",
+            "purpose": "Wagmi, QueryClient, and ConnectKit setup",
+            "complexity": "HIGH",
+            "needsComments": ["Each provider's purpose", "Why layered", "Configuration flow"],
+            "linesOfCode": 39
+          }
+        ]
+      },
+      "configurationFiles": {
+        "name": "Configuration Files",
+        "priority": "HIGH",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/config/chains.ts",
+            "purpose": "Environment-based chain switching (dev vs prod)",
+            "complexity": "MEDIUM",
+            "needsComments": ["Dev/prod detection logic", "Why Base Sepolia for dev", "How to add new chains"],
+            "linesOfCode": 27
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/config/contracts.ts",
+            "purpose": "Smart contract address constants",
+            "complexity": "LOW",
+            "needsComments": ["What each contract does", "Which network these addresses are for", "How to update for new networks"],
+            "linesOfCode": 26
+          }
+        ]
+      },
+      "environmentAndUtils": {
+        "name": "Environment & Utilities",
+        "priority": "HIGH",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/utils/env.ts",
+            "purpose": "Environment variable validation and management",
+            "complexity": "MEDIUM",
+            "needsComments": ["What each env var controls", "Why validation is important"],
+            "linesOfCode": 44
+          }
+        ]
+      },
+      "apiClientConfiguration": {
+        "name": "API Client & Configuration",
+        "priority": "HIGH",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/lib/api/client.ts",
+            "purpose": "HTTP client with retry logic, timeout handling, error normalization",
+            "complexity": "HIGH",
+            "needsComments": ["Retry logic with exponential backoff", "Timeout handling", "Error normalization", "How to use each method"],
+            "linesOfCode": 262,
+            "features": ["Request timeout", "Exponential backoff", "Error handling", "Type-safe responses"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/lib/api/config.ts",
+            "purpose": "Centralized API endpoint definitions and configuration",
+            "complexity": "HIGH",
+            "needsComments": ["API endpoint organization", "Error code meanings", "Cache TTL rationale", "Endpoint building helper"],
+            "linesOfCode": 262,
+            "exports": ["API_ENDPOINTS", "HTTP_STATUS", "MEMED_ERROR_CODES", "CACHE_CONFIG", "buildEndpoint", "isRetryableError"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/lib/api/loaders.ts",
+            "purpose": "React Router data loaders",
+            "complexity": "MEDIUM",
+            "needsComments": ["What loaders do", "When they execute", "How to add new loaders"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/lib/lens/client.ts",
+            "purpose": "Lens Protocol integration",
+            "complexity": "MEDIUM",
+            "needsComments": ["What Lens is", "Why it's integrated", "Key methods"]
+          }
+        ]
+      },
+      "apiHooks": {
+        "name": "API Hooks (Data Fetching)",
+        "priority": "HIGH",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/useApi.ts",
+            "purpose": "Generic data fetching hook with caching and error handling",
+            "complexity": "HIGH",
+            "needsComments": ["Cache implementation details", "Dependency management", "Abort signal handling", "When to use each hook"],
+            "linesOfCode": 455,
+            "exports": ["useApi", "useApiMutation", "useOptimisticApi"],
+            "features": ["TTL caching", "Request deduplication", "Error handling", "Loading states", "Data transformation"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/api/useAuth.ts",
+            "purpose": "Authentication-related mutations (nonce, wallet connection)",
+            "complexity": "MEDIUM",
+            "needsComments": ["Explain each auth flow", "Type definitions", "Error handling"],
+            "linesOfCode": 134
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/api/useMemedApi.ts",
+            "purpose": "Platform-specific API queries and mutations",
+            "complexity": "MEDIUM",
+            "needsComments": ["Data structures", "API contracts"]
+          }
+        ]
+      },
+      "contractHooks": {
+        "name": "Contract Hooks (Web3/Smart Contracts)",
+        "priority": "HIGH",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useMemedFactory.ts",
+            "purpose": "Read/write functions for MemedFactory contract",
+            "complexity": "HIGH",
+            "needsComments": ["What each function reads/writes", "Heat score mechanics", "Transaction flow"],
+            "linesOfCode": 115,
+            "functions": ["useGetTokens", "useStartFairLaunch", "useGetTokenData", "useGetWarriorNFT", "useTokenHeat"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useMemedTokenSale.ts",
+            "purpose": "Fair launch commitments and token sale interactions",
+            "complexity": "HIGH",
+            "needsComments": ["Fair launch phases", "Refund logic", "Token distribution"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useMemedToken.ts",
+            "purpose": "Token balance queries and trading",
+            "complexity": "MEDIUM",
+            "needsComments": ["Token economics", "Balance queries", "Trading mechanics"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useMemedBattle.ts",
+            "purpose": "Battle creation, staking, and resolution",
+            "complexity": "HIGH",
+            "needsComments": ["Battle phases", "Staking mechanics", "Resolver pattern"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/usePaymentToken.ts",
+            "purpose": "Payment token (GHO) balance and allowance",
+            "complexity": "MEDIUM",
+            "needsComments": ["Why GHO is used", "Approval patterns"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useMemedWarriorNFT.ts",
+            "purpose": "Warrior NFT minting and management",
+            "complexity": "MEDIUM",
+            "needsComments": ["Warrior NFT purpose", "Minting flow", "Heat system"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useMemedEngageToEarn.ts",
+            "purpose": "Rewards distribution and claiming",
+            "complexity": "MEDIUM",
+            "needsComments": ["How engagement generates rewards", "Claim mechanics"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useMemedBattleResolver.ts",
+            "purpose": "Battle outcome determination",
+            "complexity": "MEDIUM",
+            "needsComments": ["Resolution logic", "Oracle patterns"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useRecentClaims.ts",
+            "purpose": "Recent claim tracking",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useWarriorPriceHistory.ts",
+            "purpose": "Historical pricing data",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/hooks/contracts/useCreatorActivity.ts",
+            "purpose": "Creator engagement tracking",
+            "complexity": "MEDIUM"
+          }
+        ]
+      },
+      "complexComponentsMemeDetail": {
+        "name": "Complex Components - Meme Detail Page",
+        "priority": "HIGH",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/meme.tsx",
+            "purpose": "Main meme detail page with phase tracking and state management",
+            "complexity": "HIGH",
+            "needsComments": ["Phase state machine (1-4)", "Component composition", "Data loading flow", "Token ID conversion"],
+            "phases": ["1: Commitment", "2: Ready to Launch", "3: Launched", "4: Failed"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/TradeForm.tsx",
+            "purpose": "Buy/sell token form with price calculations",
+            "complexity": "HIGH",
+            "needsComments": ["Price calculation logic", "Amount formatting (formatTokenAmount utility)", "Slippage handling", "useDebounce pattern"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/MemeCard.tsx",
+            "purpose": "Meme intro card with image and basic info",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/LaunchProgress.tsx",
+            "purpose": "Progress bar for token launch phases",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/CommitETHForm.tsx",
+            "purpose": "ETH commitment form for fair launch",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/CommitGHOForm.tsx",
+            "purpose": "GHO commitment form alternative",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/StakeForm.tsx",
+            "purpose": "Staking form for warriors",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/UnstakeForm.tsx",
+            "purpose": "Unstaking form",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/ReadyToLaunch.tsx",
+            "purpose": "Status panel when launch is ready",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/ClaimTokenPanel.tsx",
+            "purpose": "Token claim interface post-launch",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/RefundPanel.tsx",
+            "purpose": "Refund interface if launch fails",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/ActiveBattles.tsx",
+            "purpose": "Display active battles for token",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/BattleHistory.tsx",
+            "purpose": "Historical battle records",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/SocialMediaStats.tsx",
+            "purpose": "Social media integration and stats",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/CountdownTimer.tsx",
+            "purpose": "Countdown display for phase changes",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/meme/LoadingState.tsx",
+            "purpose": "Loading skeleton and placeholder UI",
+            "complexity": "LOW"
+          }
+        ]
+      },
+      "complexComponentsLaunch": {
+        "name": "Complex Components - Launch Flow",
+        "priority": "MEDIUM",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/launch.tsx",
+            "purpose": "Token creation multi-step wizard",
+            "complexity": "HIGH",
+            "needsComments": ["Step state management", "Form data persistence", "Submission flow"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/launch/CreateMemeForm.tsx",
+            "purpose": "Meme metadata form (name, description, image)",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/launch/TokenSettingForm.tsx",
+            "purpose": "Token economics configuration",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/launch/ConnectProfile.tsx",
+            "purpose": "Social profile connection for launch",
+            "complexity": "MEDIUM"
+          }
+        ]
+      },
+      "complexComponentsBattles": {
+        "name": "Complex Components - Battles",
+        "priority": "MEDIUM",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/battles.tsx",
+            "purpose": "Battle listing and management page",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/battle/BattleSearchList.tsx",
+            "purpose": "Battle list with search/filter",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/battle/Challenger.tsx",
+            "purpose": "Challenger side battle card",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/battle/Challenged.tsx",
+            "purpose": "Challenged side battle card",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/shared/BattleCard.tsx",
+            "purpose": "Shared battle card component",
+            "complexity": "LOW"
+          }
+        ]
+      },
+      "complexComponentsExplore": {
+        "name": "Complex Components - Exploration/Discovery",
+        "priority": "MEDIUM",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/explore.tsx",
+            "purpose": "Token discovery and leaderboard page",
+            "complexity": "MEDIUM",
+            "hasModifications": true
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/explore/MemeTokensList.tsx",
+            "purpose": "List view of tokens",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/explore/MemeTokenCard.tsx",
+            "purpose": "Individual token card",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/explore/Leaderboard.tsx",
+            "purpose": "Leaderboard display",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/explore/LeaderboardCard.tsx",
+            "purpose": "Individual leaderboard entry card",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/explore/HorizontalCard.tsx",
+            "purpose": "Horizontal card variant",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/explore/Intro.tsx",
+            "purpose": "Explore page intro section",
+            "complexity": "LOW"
+          }
+        ]
+      },
+      "complexComponentsMintWarriors": {
+        "name": "Complex Components - Mint Warriors",
+        "priority": "MEDIUM",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/mint-warriors/MintWarriorPanel.tsx",
+            "purpose": "Main warrior NFT minting interface",
+            "complexity": "HIGH",
+            "needsComments": ["Heat-to-warrior conversion", "Pricing mechanics", "Minting process"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/mint-warriors/MintPriceAndHeat.tsx",
+            "purpose": "Heat score and pricing display",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/mint-warriors/PriceHistory.tsx",
+            "purpose": "Historical pricing chart",
+            "complexity": "MEDIUM"
+          }
+        ]
+      },
+      "sharedComponents": {
+        "name": "Shared Components",
+        "priority": "MEDIUM",
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/components/shared/ClientConnectButton.tsx",
+            "purpose": "Connect wallet button with status",
+            "complexity": "MEDIUM",
+            "hasModifications": true,
+            "needsComments": ["State management", "Connection flow", "UI states"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/shared/WalletConnection.tsx",
+            "purpose": "Wallet connection modal/dialog",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/shared/Web3ErrorBoundary.tsx",
+            "purpose": "Error boundary for Web3 errors",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/shared/UserDetail.tsx",
+            "purpose": "User profile information display",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/shared/MemeImageUploader.tsx",
+            "purpose": "Image upload with IPFS integration",
+            "complexity": "MEDIUM",
+            "needsComments": ["Image upload flow", "IPFS integration", "Validation"]
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/AppHeader.tsx",
+            "purpose": "App navigation header",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/components/app/Sidebar.tsx",
+            "purpose": "App sidebar navigation",
+            "complexity": "LOW"
+          }
+        ]
+      },
+      "routeFiles": {
+        "name": "Route Files (Pages)",
+        "priority": "MEDIUM",
+        "count": 17,
+        "files": [
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/app.tsx",
+            "purpose": "App layout wrapper",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/launch.tsx",
+            "purpose": "Token creation wizard",
+            "complexity": "HIGH"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/meme.tsx",
+            "purpose": "Individual token detail page",
+            "complexity": "HIGH"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/battles.tsx",
+            "purpose": "Battle management page",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/mint.tsx",
+            "purpose": "Warrior NFT minting page",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/explore.tsx",
+            "purpose": "Token discovery page",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/search.tsx",
+            "purpose": "Token search page",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/staking.tsx",
+            "purpose": "Staking interface",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/rewards.tsx",
+            "purpose": "Rewards claiming page",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/insights.tsx",
+            "purpose": "Analytics and insights page",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/creator.tsx",
+            "purpose": "Creator dashboard",
+            "complexity": "MEDIUM"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/app/settings.tsx",
+            "purpose": "User settings page",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/home.tsx",
+            "purpose": "Landing page",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/about.tsx",
+            "purpose": "About page",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/contact.tsx",
+            "purpose": "Contact page",
+            "complexity": "LOW"
+          },
+          {
+            "path": "/Users/a0000/projects/memed/app/routes/tokenomics.tsx",
+            "purpose": "Token economics explanation",
+            "complexity": "LOW"
+          }
+        ]
+      }
+    },
+    "summary": {
+      "totalFilesIdentified": 120,
+      "highPriorityFiles": 25,
+      "mediumPriorityFiles": 50,
+      "lowPriorityFiles": 45,
+      "estimatedCommentingHours": "40-60 hours",
+      "recommendedApproach": "Start with high-priority API/hooks, then move to complex components. Use code examples for each file."
+    }
+  }
+}

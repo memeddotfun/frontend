@@ -209,12 +209,20 @@ export default function Battles() {
   } = useAcceptBattle();
 
   // Track which battle is being accepted to hide it immediately
-  const [acceptingBattleId, setAcceptingBattleId] = useState<bigint | null>(null);
-  const [acceptedBattleIds, setAcceptedBattleIds] = useState<Set<bigint>>(new Set());
+  const [acceptingBattleId, setAcceptingBattleId] = useState<bigint | null>(
+    null
+  );
+  const [acceptedBattleIds, setAcceptedBattleIds] = useState<Set<bigint>>(
+    new Set()
+  );
 
   // Track which battle is being rejected
-  const [rejectingBattleId, setRejectingBattleId] = useState<bigint | null>(null);
-  const [rejectedBattleIds, setRejectedBattleIds] = useState<Set<bigint>>(new Set());
+  const [rejectingBattleId, setRejectingBattleId] = useState<bigint | null>(
+    null
+  );
+  const [rejectedBattleIds, setRejectedBattleIds] = useState<Set<bigint>>(
+    new Set()
+  );
 
   // Battle filtering state
   const [statusFilter, setStatusFilter] = useState<"all" | BattleStatus>("all");
@@ -705,7 +713,9 @@ export default function Battles() {
                   | any[];
                 const allTokens = Array.isArray(allTokensData)
                   ? allTokensData
-                  : allTokensData && 'tokens' in allTokensData && Array.isArray(allTokensData.tokens)
+                  : allTokensData &&
+                    "tokens" in allTokensData &&
+                    Array.isArray(allTokensData.tokens)
                   ? allTokensData.tokens
                   : [];
                 console.log(
@@ -1667,9 +1677,9 @@ export default function Battles() {
                           const inBattle = !!battleStatus;
                           const isDisabled = Boolean(
                             inBattle ||
-                            isAlreadySelected ||
-                            isSameToken ||
-                            isOwnTokenBattle
+                              isAlreadySelected ||
+                              isSameToken ||
+                              isOwnTokenBattle
                           );
 
                           return (
