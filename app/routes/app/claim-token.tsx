@@ -16,7 +16,10 @@ import { API_ENDPOINTS, buildEndpoint } from "@/lib/api/config";
 import { useGetTokenData } from "@/hooks/contracts/useMemedFactory";
 import { useCreateNonce, type Token } from "@/hooks/api/useAuth";
 import { memeTokenDetailLoader, type LoaderData } from "@/lib/api/loaders";
-
+import {
+  useFairLaunchData,
+  useIsRefundable,
+} from "@/hooks/contracts/useMemedTokenSale";
 // Export the loader for this route
 export { memeTokenDetailLoader as loader };
 
@@ -41,6 +44,12 @@ export default function ClaimToken() {
       token?.fairLaunchId ? BigInt(token.fairLaunchId) : BigInt(0)
     );
 
+  // Monitor fair launch status for real-time phase changes
+  const { data: fairLaunchData, isLoading: isFairLaunchLoading } =
+    useFairLaunchData(
+      token?.fairLaunchId ? BigInt(token.fairLaunchId) : BigInt(0)
+    );
+
   console.log(
     "[Claim Token] Contract Data:",
     contractTokenData,
@@ -61,9 +70,12 @@ export default function ClaimToken() {
   // Check launch status - if launch failed, disable claiming
   // Backend returns 'failed' boolean field, not 'phase'
   const isLaunchFailed = token?.failed === true;
-  const launchStatus = isLaunchFailed ? "FAILED" :
-                       token?.claimed ? "COMPLETED" :
-                       "IN_PROGRESS";
+  const launchStatus =
+    isLaunchFailed || (fairLaunchData && fairLaunchData[0] !== 2)
+      ? "FAILED"
+      : token?.claimed
+      ? "COMPLETED"
+      : "IN_PROGRESS";
   const canClaim = isUnclaimed && !isLaunchFailed;
 
   // Handle claim submission
@@ -260,7 +272,9 @@ export default function ClaimToken() {
               <div className="space-y-2 text-sm">
                 {token.user?.socials?.[0] && (
                   <div className="flex justify-between">
-                    <span className="text-neutral-400">{token.user.socials[0].type} Handle:</span>
+                    <span className="text-neutral-400">
+                      {token.user.socials[0].type} Handle:
+                    </span>
                     <span className="text-white font-mono">
                       @{token.user.socials[0].username}
                     </span>
@@ -282,11 +296,15 @@ export default function ClaimToken() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Launch Status:</span>
-                  <span className={`font-semibold ${
-                    launchStatus === "COMPLETED" ? "text-green-400" :
-                    isLaunchFailed ? "text-red-400" :
-                    "text-yellow-400"
-                  }`}>
+                  <span
+                    className={`font-semibold ${
+                      launchStatus === "COMPLETED"
+                        ? "text-green-400"
+                        : isLaunchFailed
+                        ? "text-red-400"
+                        : "text-yellow-400"
+                    }`}
+                  >
                     {launchStatus}
                   </span>
                 </div>
@@ -311,7 +329,8 @@ export default function ClaimToken() {
                   Verify Your Identity
                 </h4>
                 <p className="text-neutral-400 text-sm">
-                  You must be the owner of the {token.user?.socials?.[0]?.type || "social"} handle{" "}
+                  You must be the owner of the{" "}
+                  {token.user?.socials?.[0]?.type || "social"} handle{" "}
                   {token.user?.socials?.[0] ? (
                     <span className="text-white font-mono">
                       @{token.user.socials[0].username}
@@ -363,7 +382,8 @@ export default function ClaimToken() {
                 <div>
                   <p className="text-sm font-semibold mb-1">Launch Failed</p>
                   <p className="text-xs">
-                    This token's launch has failed or been cancelled. It cannot be claimed at this time.
+                    This token's launch has failed or been cancelled. It cannot
+                    be claimed at this time.
                   </p>
                 </div>
               </div>
