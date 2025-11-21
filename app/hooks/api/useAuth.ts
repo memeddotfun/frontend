@@ -47,6 +47,9 @@ export interface Token {
   heat?: bigint | number; // Heat score from contract, used for leaderboard
   phase?: string; // Token phase (e.g., "COMPLETED", "REVEAL", "COMMIT")
   user?: User; // User who created the token (populated in some endpoints)
+  failed?: boolean; // Whether the token launch has failed
+  claimed?: boolean; // Whether the token has been claimed by creator
+  endTime?: string; // Token launch end time
 }
 
 export interface Social {

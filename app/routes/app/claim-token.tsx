@@ -58,6 +58,14 @@ export default function ClaimToken() {
     ? (contractTokenData as any)[2]
     : null;
 
+  // Check launch status - if launch failed, disable claiming
+  // Backend returns 'failed' boolean field, not 'phase'
+  const isLaunchFailed = token?.failed === true;
+  const launchStatus = isLaunchFailed ? "FAILED" :
+                       token?.claimed ? "COMPLETED" :
+                       "IN_PROGRESS";
+  const canClaim = isUnclaimed && !isLaunchFailed;
+
   // Handle claim submission
   const handleClaim = async () => {
     if (!address) {
@@ -267,9 +275,19 @@ export default function ClaimToken() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-neutral-400">Status:</span>
+                  <span className="text-neutral-400">Claim Status:</span>
                   <span className="text-yellow-400 font-semibold">
                     Unclaimed
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">Launch Status:</span>
+                  <span className={`font-semibold ${
+                    launchStatus === "COMPLETED" ? "text-green-400" :
+                    isLaunchFailed ? "text-red-400" :
+                    "text-yellow-400"
+                  }`}>
+                    {launchStatus}
                   </span>
                 </div>
               </div>
@@ -337,6 +355,21 @@ export default function ClaimToken() {
             </div>
           </div>
 
+          {/* Failed Launch Warning */}
+          {isLaunchFailed && (
+            <div className="bg-red-500/10 border border-red-500 text-red-400 p-4 rounded-lg mb-6">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold mb-1">Launch Failed</p>
+                  <p className="text-xs">
+                    This token's launch has failed or been cancelled. It cannot be claimed at this time.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Error Display */}
           {claimError && (
             <div className="bg-red-500/10 border border-red-500 text-red-400 p-4 rounded-lg mb-6">
@@ -357,7 +390,7 @@ export default function ClaimToken() {
           ) : (
             <button
               onClick={handleClaim}
-              disabled={isClaiming}
+              disabled={isClaiming || isLaunchFailed}
               className="w-full px-6 py-4 bg-green-600 hover:bg-green-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
             >
               {isClaiming ? (
