@@ -23,7 +23,7 @@ export function Leaderboard({ items }: LeaderboardProps) {
           <span className="text-lg sm:text-xl md:text-2xl">
             <TrophyIcon className="w-4 h-4 sm:w-5 md:w-6" />
           </span>
-          Heat Score Leaderboard
+          Leaderboard
         </h2>
 
         <div className="space-y-3 sm:space-y-4">

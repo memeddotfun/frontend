@@ -24,9 +24,12 @@ export default function Explore() {
   const memeTokens = (loadedTokens || []).map((token) => ({
     id: token.id,
     name: token.metadata?.name || "Unnamed Token", // Real token name
-    creator: token.userId && typeof token.userId === 'string' && token.userId.length >= 4
-      ? `user...${token.userId.slice(-4)}`
-      : "Unknown", // Real user ID (shortened) with safe null checks
+    creator:
+      token.userId &&
+      typeof token.userId === "string" &&
+      token.userId.length >= 4
+        ? `user...${token.userId.slice(-4)}`
+        : "Unknown", // Real user ID (shortened) with safe null checks
     ticker: token.metadata?.ticker || "UNKN", // Real ticker symbol
     description: token.metadata?.description || "No description", // Real description
     price: 0, // TODO: Calculate from fair launch data
@@ -53,8 +56,8 @@ export default function Explore() {
     return [...loadedTokens]
       .filter((token) => token.heat !== undefined && token.heat !== null)
       .sort((a, b) => {
-        const heatA = typeof a.heat === 'bigint' ? Number(a.heat) : a.heat || 0;
-        const heatB = typeof b.heat === 'bigint' ? Number(b.heat) : b.heat || 0;
+        const heatA = typeof a.heat === "bigint" ? Number(a.heat) : a.heat || 0;
+        const heatB = typeof b.heat === "bigint" ? Number(b.heat) : b.heat || 0;
         return heatB - heatA; // Descending order
       })
       .slice(0, 5) // Top 5
@@ -62,16 +65,21 @@ export default function Explore() {
         id: token.id || index + 1,
         rank: index + 1,
         name: token.metadata?.name || "Unnamed Token",
-        username: token.userId && typeof token.userId === 'string' && token.userId.length >= 8
-          ? `@${token.userId.slice(0, 8)}...`
-          : "@unknown",
+        username:
+          token.userId &&
+          typeof token.userId === "string" &&
+          token.userId.length >= 8
+            ? `@${token.userId.slice(0, 8)}...`
+            : "@unknown",
         image: token.metadata?.imageKey || meme,
-        score: typeof token.heat === 'bigint' ? Number(token.heat) : token.heat || 0,
-        engagement: typeof token.heat === 'bigint'
-          ? Number(token.heat) >= 1000
-            ? `${(Number(token.heat) / 1000).toFixed(1)}K`
-            : String(Number(token.heat))
-          : "0",
+        score:
+          typeof token.heat === "bigint" ? Number(token.heat) : token.heat || 0,
+        engagement:
+          typeof token.heat === "bigint"
+            ? Number(token.heat) >= 1000
+              ? `${(Number(token.heat) / 1000).toFixed(1)}K`
+              : String(Number(token.heat))
+            : "0",
       }));
   }, [loadedTokens]);
 
@@ -83,7 +91,8 @@ export default function Explore() {
 
     // Calculate total heat across all tokens
     const totalHeat = loadedTokens.reduce((sum, token) => {
-      const heat = typeof token.heat === 'bigint' ? Number(token.heat) : token.heat || 0;
+      const heat =
+        typeof token.heat === "bigint" ? Number(token.heat) : token.heat || 0;
       return sum + heat;
     }, 0);
 
@@ -104,7 +113,10 @@ export default function Explore() {
   return (
     <div className="min-h-screen  w-full">
       <div className=" px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 lg:space-y-8 w-full ">
-        <Intro totalTokens={platformStats.totalTokens} totalHeat={platformStats.totalHeat} />
+        <Intro
+          totalTokens={platformStats.totalTokens}
+          totalHeat={platformStats.totalHeat}
+        />
 
         {/* Tabs for switching between all tokens and unclaimed tokens */}
         <div className="flex gap-2 border-b border-neutral-800">
@@ -147,7 +159,9 @@ export default function Explore() {
                   />
                 ))}
                 {memeTokens.length === 0 && (
-                  <div className="text-neutral-500 text-sm">No tokens available</div>
+                  <div className="text-neutral-500 text-sm">
+                    No tokens available
+                  </div>
                 )}
               </div>
             </div>
@@ -158,7 +172,7 @@ export default function Explore() {
                   {/* Claimed Tokens List - shows tokens that have been claimed */}
                   <MemeTokensList tokens={memeTokens} />
 
-                  {/* Heat Score Leaderboard - always second, beside on xl screens */}
+                  {/* Leaderboard - always second, beside on xl screens */}
                   <Leaderboard items={leaderboard} />
                 </div>
               </div>
