@@ -19,5 +19,11 @@ export default [
     //dynamic routes with loaders
     route("explore/meme/:memeId", "routes/app/meme.tsx"),
     route("explore/meme/:memeId/mint", "routes/app/mint.tsx"),
+
+    //claim unclaimed token route
+    route("claim-token/:memeId", "routes/app/claim-token.tsx"),
+
+    //admin routes
+    route("admin/create-unclaimed-token", "routes/admin/create-unclaimed-token.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -23,7 +23,7 @@ const SearchWithDropdown = () => {
 
   const filteredItems = searchTerm
     ? allItems.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()),
+        item.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : [];
 
@@ -107,7 +107,7 @@ export function AppHeader({ onMenuToggle }: AppHeaderProps) {
     if (page === "app" || !page) {
       return "Explore";
     }
-    return page.charAt(0).toUpperCase() + page.slice(1);
+    return "Claim";
   };
 
   const title = getTitle(location.pathname);

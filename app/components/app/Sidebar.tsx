@@ -14,8 +14,10 @@ import {
   ArrowRight,
   SwordIcon,
   Shield,
+  UserCog,
 } from "lucide-react";
 import logo from "@/assets/images/logo.png";
+import { useAuthStore } from "@/store/auth";
 
 interface NavItem {
   name: string;
@@ -67,6 +69,10 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  // Get user data to check admin role
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'ADMIN';
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -81,7 +87,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside
         className={`
         fixed lg:relative
-        w-64  lg:w-[18%] bg-black border-r border-neutral-800 h-full 
+        w-64  lg:w-[18%] bg-black border-r border-neutral-800 h-full
         flex flex-col
         transform transition-transform duration-300 ease-in-out
         z-50
@@ -132,6 +138,32 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </li>
               ))}
             </ul>
+
+            {/* Admin Section - Only visible to admin users */}
+            {isAdmin && (
+              <>
+                <h2 className="text-gray-500 text-xs font-medium tracking-wider mb-4 mt-8">
+                  Admin
+                </h2>
+                <ul className="space-y-2">
+                  <li>
+                    <NavLink
+                      to="/admin/create-unclaimed-token"
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 hover:bg-gradient-to-t from-primary-900 to-black hover:border-t hover:border-b border-primary-900  hover:shadow-[inset_0_0_20px_rgba(34,197,94,0.2),inset_0_0_40px_rgba(0,0,0,0.3)] px-3 py-2.5 rounded-lg transition-all duration-300 ${
+                          isActive
+                            ? "bg-gradient-to-t from-primary-900 to-black border-t border-b border-primary-900 text-white shadow-[inset_0_0_20px_rgba(34,197,94,0.2),inset_0_0_40px_rgba(0,0,0,0.3)]"
+                            : "text-white hover:text-white"
+                        }`
+                      }
+                    >
+                      <UserCog className="w-5 h-5" />
+                      <span className="font-medium">Create Unclaimed</span>
+                    </NavLink>
+                  </li>
+                </ul>
+              </>
+            )}
           </div>
 
           <div className="px-4 mt-8 pt-8 border-t border-neutral-800">

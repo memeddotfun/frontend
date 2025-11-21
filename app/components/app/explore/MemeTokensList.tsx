@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { MemeTokenCard } from "./MemeTokenCard";
+import { useGetTokenData } from "@/hooks/contracts/useMemedFactory";
 
 interface MemeToken {
   id: string;
@@ -23,6 +24,39 @@ interface MemeTokensListProps {
 
 type SortOption = "new" | "popular" | "marketCap";
 
+// Component to check a token's claim status and render with appropriate props
+function TokenWithClaimStatus({ token }: { token: MemeToken }) {
+  // Get token data from contract using fairLaunchId
+  const {
+    data: tokenData,
+    isLoading,
+    error,
+  } = useGetTokenData(
+    token.fairLaunchId ? BigInt(token.fairLaunchId) : BigInt(0)
+  );
+
+  // Check if token is unclaimed
+  // tokenData structure: [token, warriorNFT, creator, name, ticker, description, image, isClaimedByCreator]
+  // isClaimedByCreator is at index 7
+  // If contract call fails (error), don't show unclaimed badge (data might be incomplete)
+  const isUnclaimed =
+    !error && tokenData && token.fairLaunchId ? !(tokenData as any)[3] : false;
+
+  // Debug logging
+  // if (token.fairLaunchId) {
+  //   console.log(`[All Tokens] Token ${token.name}:`, {
+  //     fairLaunchId: token.fairLaunchId,
+  //     hasData: !!tokenData,
+  //     isLoading,
+  //     error: error?.message || null,
+  //     isClaimedByCreator: tokenData ? (tokenData as any)[7] : "no data",
+  //     isUnclaimed,
+  //   });
+  // }
+
+  return <MemeTokenCard token={token} isUnclaimed={isUnclaimed} />;
+}
+
 export function MemeTokensList({ tokens }: MemeTokensListProps) {
   const [sortBy, setSortBy] = useState<SortOption>("new");
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,7 +72,9 @@ export function MemeTokensList({ tokens }: MemeTokensListProps) {
         return tokensCopy.sort((a, b) => {
           if (!a.createdAt) return 1;
           if (!b.createdAt) return -1;
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         });
 
       case "popular":
@@ -122,7 +158,7 @@ export function MemeTokensList({ tokens }: MemeTokensListProps) {
           <span className="text-gray-400 text-xs sm:text-sm">Sort By:</span>
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            onChange={(e) => handleSortChange(e.target.value as SortOption)}
             className="bg-neutral-900 text-white px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm rounded-lg border cursor-pointer border-neutral-800 focus:outline-none focus:border-green-500"
           >
             <option value="new">New</option>
@@ -133,60 +169,81 @@ export function MemeTokensList({ tokens }: MemeTokensListProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-        {sortedTokens.map((token) => (
-          <MemeTokenCard key={token.id} token={token} />
+        {paginatedTokens.map((token) => (
+          <TokenWithClaimStatus key={token.id} token={token} />
         ))}
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center items-center gap-1 sm:gap-2 mt-auto pt-4">
-        <button className="p-1.5 sm:p-2 rounded hover:bg-neutral-800 transition-colors cursor-pointer">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-1 sm:gap-2 mt-auto pt-4">
+          {/* Previous Button */}
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="p-1.5 sm:p-2 rounded hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded bg-neutral-800 cursor-pointer">
-          1
-        </button>
-        <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded hover:bg-neutral-800 transition-colors cursor-pointer">
-          2
-        </button>
-        <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded hover:bg-neutral-800 transition-colors cursor-pointer">
-          3
-        </button>
-        <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded hover:bg-neutral-800 transition-colors cursor-pointer">
-          4
-        </button>
-        <span className="px-1 sm:px-2 text-xs sm:text-sm">...</span>
-        <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded hover:bg-neutral-800 transition-colors cursor-pointer">
-          100
-        </button>
-        <button className="p-1.5 sm:p-2 rounded hover:bg-neutral-800 transition-colors cursor-pointer">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+
+          {/* Page Numbers */}
+          {getPageNumbers().map((page, index) =>
+            typeof page === "number" ? (
+              <button
+                key={index}
+                onClick={() => handlePageClick(page)}
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-colors cursor-pointer ${
+                  currentPage === page
+                    ? "bg-green-600 text-white"
+                    : "hover:bg-neutral-800"
+                }`}
+              >
+                {page}
+              </button>
+            ) : (
+              <span
+                key={index}
+                className="px-1 sm:px-2 text-xs sm:text-sm text-neutral-500"
+              >
+                {page}
+              </span>
+            )
+          )}
+
+          {/* Next Button */}
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="p-1.5 sm:p-2 rounded hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      </div>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

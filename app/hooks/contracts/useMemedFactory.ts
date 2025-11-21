@@ -28,10 +28,6 @@ export function useStartFairLaunch() {
   // Type for the arguments of the startFairLaunch function
   type StartFairLaunchArgs = {
     creator: `0x${string}`;
-    name: string;
-    ticker: string;
-    description: string;
-    image: string;
   };
 
   const startFairLaunch = (args: StartFairLaunchArgs) => {
@@ -39,13 +35,7 @@ export function useStartFairLaunch() {
       address: FACTORY_ADDRESS,
       abi: factoryAbi,
       functionName: "startFairLaunch",
-      args: [
-        args.creator,
-        args.name,
-        args.ticker,
-        args.description,
-        args.image,
-      ],
+      args: [args.creator],
     });
   };
 

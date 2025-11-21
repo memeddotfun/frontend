@@ -19,6 +19,8 @@ import { ChevronLeft, Sword } from "lucide-react";
 import { useParams, Link, useLoaderData } from "react-router";
 import { memeTokenDetailLoader, type LoaderData } from "@/lib/api/loaders";
 import type { Token } from "@/hooks/api/useAuth";
+import { useGetTokenData } from "@/hooks/contracts/useMemedFactory";
+import { Unlock, ArrowLeft } from "lucide-react";
 
 // Export the loader for this route
 export { memeTokenDetailLoader as loader };
@@ -32,6 +34,27 @@ export default function Meme() {
   console.log(token);
   // Phase states: 1 = commitment, 2 = ready to launch, 3 = launched, 4 = failed
   const [currentPhase, setCurrentPhase] = useState<1 | 2 | 3 | 4>(1);
+
+  // Check if token is unclaimed using contract data
+  const { data: tokenClaimData, isLoading: isClaimDataLoading } = useGetTokenData(
+    token?.fairLaunchId ? BigInt(token.fairLaunchId) : BigInt(0)
+  );
+
+  // tokenData structure: [token, warriorNFT, creator, name, ticker, description, image, isClaimedByCreator]
+  // isClaimedByCreator is at index 7
+  const isTokenUnclaimed = tokenClaimData && token?.fairLaunchId
+    ? !(tokenClaimData as any)[7]
+    : false;
+
+  // Debug logging for claim status
+  console.log('[Meme Detail] Claim Status Check:', {
+    tokenId: token?.id,
+    fairLaunchId: token?.fairLaunchId,
+    hasClaimData: !!tokenClaimData,
+    isClaimDataLoading,
+    isClaimedByCreator: tokenClaimData ? (tokenClaimData as any)[7] : 'no data',
+    isTokenUnclaimed,
+  });
 
   // Helper function to convert token ID to contract ID with error handling
   const getContractTokenId = (token: Token) => {
@@ -164,6 +187,117 @@ export default function Meme() {
             Back
           </button>
           <LoadingState />
+        </div>
+      </div>
+    );
+  }
+
+  // If token is unclaimed, show special claim UI instead of normal token details
+  if (isTokenUnclaimed && token) {
+    return (
+      <div className="min-h-screen w-full">
+        <div className="px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-6 w-full max-w-4xl mx-auto">
+          {/* Back Button */}
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+          >
+            <ArrowLeft size={20} />
+            Back to Explore
+          </button>
+
+          {/* Unclaimed Token Card */}
+          <div className="bg-neutral-900 border border-yellow-500/50 rounded-xl overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 p-6 border-b border-yellow-500/30">
+              <div className="flex items-center gap-3 mb-2">
+                <Unlock className="w-8 h-8 text-yellow-500" />
+                <h1 className="text-3xl font-bold text-white">Unclaimed Token</h1>
+              </div>
+              <p className="text-neutral-300">This token hasn't been claimed by its creator yet</p>
+            </div>
+
+            {/* Token Info */}
+            <div className="p-6 space-y-6">
+              {/* Token Image and Details */}
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Image */}
+                <div className="w-full md:w-1/3">
+                  <div className="aspect-square bg-neutral-800 rounded-lg overflow-hidden">
+                    {token.metadata?.imageKey || token.image?.s3Key ? (
+                      <img
+                        src={token.metadata?.imageKey || token.image?.s3Key}
+                        alt={token.metadata?.name || "Token"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-6xl">
+                        🎭
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-1">
+                      {token.metadata?.name || "Unnamed Token"}
+                    </h2>
+                    <p className="text-lg text-yellow-500 font-semibold">
+                      ${token.metadata?.ticker || "???"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-neutral-400 mb-2">Description</h3>
+                    <p className="text-neutral-300">
+                      {token.metadata?.description || "No description available"}
+                    </p>
+                  </div>
+
+                  {token.user?.socials && token.user.socials.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-neutral-400 mb-2">Creator</h3>
+                      {token.user.socials.map((social: any) => (
+                        <div key={social.id} className="flex items-center gap-2">
+                          <span className="text-neutral-300">
+                            {social.type}: @{social.username}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Info Banner */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <h3 className="text-white font-semibold mb-2">ℹ️ About Unclaimed Tokens</h3>
+                <p className="text-sm text-neutral-300">
+                  This token was created for a Lens creator who hasn't claimed ownership yet.
+                  Only the rightful creator (wallet owner of the associated Lens handle) can claim this token.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  to={`/claim-token/${token.id}`}
+                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Unlock className="w-5 h-5" />
+                  Claim This Token
+                </Link>
+                <button
+                  onClick={handleBack}
+                  className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors cursor-pointer"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

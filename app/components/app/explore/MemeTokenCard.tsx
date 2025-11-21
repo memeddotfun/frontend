@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Flame, Timer, Rocket, XCircle } from "lucide-react";
+import { Flame, Timer, Rocket, XCircle, Unlock } from "lucide-react";
 import { Link } from "react-router";
 import {
   useFairLaunchData,
@@ -20,9 +20,11 @@ interface MemeTokenCardProps {
     badge?: string;
     badgeColor?: string;
   };
+  linkTo?: string; // Optional custom link destination
+  isUnclaimed?: boolean; // Whether this token is unclaimed
 }
 
-export function MemeTokenCard({ token }: MemeTokenCardProps) {
+export function MemeTokenCard({ token, linkTo, isUnclaimed = false }: MemeTokenCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   // Convert fairLaunchId to BigInt for contract calls
@@ -37,10 +39,15 @@ export function MemeTokenCard({ token }: MemeTokenCardProps) {
   const status = fairLaunchData ? fairLaunchData[0] : 0;
   const isFailed = isRefundable === true || status === 3;
 
+  // Use custom link if provided, otherwise default to token detail page
+  const destination = linkTo || `/explore/meme/${token.id}`;
+
   return (
     <Link
-      to={`/explore/meme/${token.id}`}
-      className="bg-neutral-900 rounded-xl p-2 sm:p-3 hover:bg-neutral-800 transition-colors cursor-pointer border border-neutral-800"
+      to={destination}
+      className={`bg-neutral-900 rounded-xl p-2 sm:p-3 hover:bg-neutral-800 transition-colors cursor-pointer border ${
+        isUnclaimed ? 'border-yellow-500/50' : 'border-neutral-800'
+      }`}
     >
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Token Image with lazy loading and loading skeleton */}
@@ -76,8 +83,12 @@ export function MemeTokenCard({ token }: MemeTokenCardProps) {
                 Created by <span className="text-white">{token.creator}</span>
               </p>
             </div>
-            {/* Status Badge - Shows actual launch phase from contract */}
-            {isFailed ? (
+            {/* Status Badge - Shows actual launch phase from contract or Unclaimed */}
+            {isUnclaimed ? (
+              <span className="text-black bg-yellow-500 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium ml-2 flex-shrink-0 flex gap-1 items-center">
+                <Unlock size={12} /> Unclaimed
+              </span>
+            ) : isFailed ? (
               <span className="text-red-500 bg-red-800/50 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium ml-2 flex-shrink-0 flex gap-1 items-center">
                 <XCircle size={12} /> Failed
               </span>

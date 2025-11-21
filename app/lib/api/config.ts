@@ -377,6 +377,46 @@ export const API_ENDPOINTS = {
    * Clears: Session cookie
    */
   DISCONNECT_WALLET: "/api/disconnect-wallet",
+
+  // ========================================================================
+  // ADMIN - Admin-only endpoints
+  // ========================================================================
+
+  /**
+   * POST /api/create-unclaimed-tokens
+   * Create a token for any Lens handle (Admin only)
+   * Body: FormData { data: { name, ticker, description, address }, image: File }
+   * Headers: Nonce signature authentication
+   * Returns: { message, fairLaunchId }
+   * Authorization: Requires ADMIN role
+   */
+  CREATE_UNCLAIMED_TOKEN: "/api/create-unclaimed-tokens",
+
+  /**
+   * POST /api/claim-unclaimed-token
+   * Claim ownership of an unclaimed token (Lens handle owner)
+   * Body: { id: tokenId }
+   * Headers: Nonce signature authentication
+   * Returns: { message }
+   * Validates: User owns the Lens handle via getHandleOwner()
+   */
+  CLAIM_UNCLAIMED_TOKEN: "/api/claim-unclaimed-token",
+
+  /**
+   * GET /api/token-by-address/:address
+   * Get token details by contract address
+   * Path params: { address: tokenAddress }
+   * Returns: Token object with metadata
+   */
+  TOKEN_BY_ADDRESS: "/api/token-by-address/:address",
+
+  /**
+   * GET /api/token-by-social
+   * Get token by social account (Lens handle)
+   * Query params: { username: string, type: "LENS" | "TWITTER" }
+   * Returns: Token object with owner's social information
+   */
+  TOKEN_BY_SOCIAL: "/api/token-by-social",
 } as const;
 
 /**
