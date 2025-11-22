@@ -21,6 +21,9 @@ import { memeTokenDetailLoader, type LoaderData } from "@/lib/api/loaders";
 import type { Token } from "@/hooks/api/useAuth";
 import { useGetTokenData } from "@/hooks/contracts/useMemedFactory";
 import { Unlock, ArrowLeft } from "lucide-react";
+import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
+import { useAuthStore } from "@/store/auth";
+import { useAccount } from "wagmi";
 
 // Export the loader for this route
 export { memeTokenDetailLoader as loader };
@@ -28,6 +31,8 @@ export { memeTokenDetailLoader as loader };
 export default function Meme() {
   const { data: token, error } = useLoaderData() as LoaderData<Token>;
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+  const { address } = useAccount();
   const { memeId } = useParams();
   const [active, setActive] = useState<boolean>(false);
   const [refreshKey, setRefreshKey] = useState<string>(Date.now().toString());
@@ -359,13 +364,20 @@ export default function Meme() {
               </div>
             )}
           </div>
-          {/* Right Section: Phase-based panels */}
+          {/* Right Section: Phase-based panels - gated behind authentication */}
           {currentPhase === 1 && (
             <div className="w-full xl:w-[400px] flex flex-col space-y-4 sm:space-y-6">
-              <CommitETHForm
-                tokenId={contractTokenId}
-                onCommitSuccess={handleCommitSuccess}
-              />
+              {!isAuthenticated || !address ? (
+                <ConnectWalletPrompt
+                  variant="card"
+                  message="Connect your wallet to commit ETH to this token launch"
+                />
+              ) : (
+                <CommitETHForm
+                  tokenId={contractTokenId}
+                  onCommitSuccess={handleCommitSuccess}
+                />
+              )}
             </div>
           )}
           {currentPhase === 2 && (

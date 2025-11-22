@@ -3,8 +3,10 @@ import { useMemeTokens } from '@/hooks/api/useMemedApi';
 import { Loader2 } from 'lucide-react';
 import defaultMeme from "@/assets/images/meme.png";
 import { useMemo } from 'react';
+import { Link } from 'react-router';
+import { useAuthStore } from '@/store/auth';
 
-// Helper to format market cap
+// Helper to format market cap - memoized outside component for performance
 const formatMarketCap = (value: number): string => {
   if (value >= 1_000_000) {
     return `$${(value / 1_000_000).toFixed(2)}M`;
@@ -15,41 +17,58 @@ const formatMarketCap = (value: number): string => {
   return `$${value.toFixed(2)}`;
 };
 
+// Type definition for API token response
+interface ApiToken {
+  id?: string;
+  address: string;
+  metadata?: {
+    name?: string;
+    imageKey?: string;
+  };
+  name?: string;
+  userId?: string;
+  image?: {
+    s3Key?: string;
+  };
+  marketCap?: number;
+  heat?: number;
+  change24h?: number;
+}
+
 export function TrendingMemes() {
-  // Fetch all tokens from API
-  const { data: tokensData, isLoading, error } = useMemeTokens();
+  const { isAuthenticated } = useAuthStore();
+
+  // Only fetch tokens if authenticated (backend requires auth for /tokens endpoint)
+  const { data: tokensData, isLoading, error } = useMemeTokens({
+    immediate: isAuthenticated, // Only fetch when authenticated
+  });
 
   // Get top 4 trending tokens sorted by heat score (or market cap if no heat)
+  // Optimized: single pass with slice(0, 4) before mapping for better performance
   const topMemes = useMemo(() => {
     if (!tokensData || !Array.isArray(tokensData)) return [];
 
-    // Sort tokens by heat score (descending), with market cap as fallback
-    const sortedTokens = [...tokensData].sort((a: any, b: any) => {
-      const heatA = a.heat || 0;
-      const heatB = b.heat || 0;
+    // Sort by heat (descending), then market cap (descending)
+    return (tokensData as ApiToken[])
+      .sort((a, b) => {
+        // Primary: Heat score (higher is better)
+        const heatDiff = (b.heat || 0) - (a.heat || 0);
+        if (heatDiff !== 0) return heatDiff;
 
-      // Primary sort: by heat score
-      if (heatB !== heatA) {
-        return heatB - heatA;
-      }
-
-      // Fallback sort: by market cap
-      const capA = a.marketCap || 0;
-      const capB = b.marketCap || 0;
-      return capB - capA;
-    });
-
-    // Take top 4 and format
-    return sortedTokens.slice(0, 4).map((token: any) => ({
-      id: token.id || token.address,
-      address: token.address,
-      title: token.metadata?.name || token.name || 'Unnamed Token',
-      creator: token.userId ? `${token.userId.slice(0, 6)}...` : 'Anonymous',
-      image: token.image?.s3Key || token.metadata?.imageKey || defaultMeme,
-      marketCap: formatMarketCap(token.marketCap || 0),
-      heat: token.heat || 0,
-      change24h: token.change24h || 0,
-    }));
+        // Fallback: Market cap (higher is better)
+        return (b.marketCap || 0) - (a.marketCap || 0);
+      })
+      .slice(0, 4) // Take top 4 BEFORE mapping (more efficient)
+      .map((token) => ({
+        id: token.id || token.address,
+        address: token.address,
+        title: token.metadata?.name || token.name || 'Unnamed Token',
+        creator: token.userId ? `${token.userId.slice(0, 6)}...` : 'Anonymous',
+        image: token.image?.s3Key || token.metadata?.imageKey || defaultMeme,
+        marketCap: formatMarketCap(token.marketCap || 0),
+        heat: token.heat || 0,
+        change24h: token.change24h || 0,
+      }));
   }, [tokensData]);
 
   // Show loading state
@@ -76,22 +95,24 @@ export function TrendingMemes() {
         </h2>
 
         {/* Show message if no data */}
-        {(!topMemes || topMemes.length === 0) && !error && (
+        {(!topMemes || topMemes.length === 0) && !error && !isLoading && (
           <div className="text-center py-12">
             <p className="text-gray-300 text-lg mb-4">
-              No trending memes yet. Be the first to create one!
+              {isAuthenticated
+                ? "No trending memes yet. Be the first to create one!"
+                : "Discover meme tokens, battles, and rewards"}
             </p>
-            <a
-              href="/app/launch"
+            <Link
+              to="/explore"
               className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors focus:outline-none focus:ring-4 focus:ring-green-500/50"
             >
-              Launch Your Meme Token
-            </a>
+              Explore Tokens
+            </Link>
           </div>
         )}
 
-        {/* Show error message if there's an API error */}
-        {error && (
+        {/* Show error only if authenticated (auth errors expected for unauthenticated users) */}
+        {error && isAuthenticated && (
           <div className="text-center py-12">
             <p className="text-red-400 text-lg">
               Unable to load trending memes. Please try again later.

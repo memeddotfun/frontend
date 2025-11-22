@@ -11,11 +11,14 @@ import { Share2Icon } from "lucide-react";
 import { Link } from "react-router";
 import { useCreateNonce } from "@/hooks/api/useAuth";
 import { useIsMintable } from "@/hooks/contracts/useMemedTokenSale";
+import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
+import { useAuthStore } from "@/store/auth";
 
 export default function LaunchPage() {
   const { address } = useAccount();
   const { mutate: createNonce } = useCreateNonce();
   const { signMessageAsync } = useSignMessage();
+  const { isAuthenticated } = useAuthStore();
 
   // Check if user is allowed to mint/launch tokens
   const { data: isMintable, isLoading: isMintableLoading } = useIsMintable(address);
@@ -202,6 +205,22 @@ export default function LaunchPage() {
           </div>
         </div>
       </>
+    );
+  }
+
+  // Gate: Require wallet connection to launch tokens
+  if (!isAuthenticated || !address) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="container px-4 py-12 mx-auto">
+          <div className="max-w-2xl mx-auto">
+            <ConnectWalletPrompt
+              variant="card"
+              message="Connect your wallet to launch your own meme token"
+            />
+          </div>
+        </div>
+      </div>
     );
   }
 

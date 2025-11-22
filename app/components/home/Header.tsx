@@ -1,7 +1,6 @@
 import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
 import { ClientConnectButton } from "../shared/ClientConnectButton";
-import { useAuthStore } from "@/store/auth";
 import logo from "@/assets/images/logo.png";
 
 interface HeaderProps {
@@ -10,13 +9,11 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
-  const { isAuthenticated } = useAuthStore();
-
-  // Filter navigation items based on authentication
+  // Navigation items - now publicly accessible including Explore
   const navItems = [
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
-    ...(isAuthenticated ? [{ label: "Explore", href: "/explore" }] : []),
+    { label: "Explore", href: "/explore" }, // Now visible to everyone
   ];
 
   return (

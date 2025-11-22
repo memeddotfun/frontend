@@ -1,26 +1,60 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { User, Wallet, Check, Settings2, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import { useNavigate } from "react-router";
+import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
+
+// Type definitions for better type safety
+interface SocialAccount {
+  type: "LENS" | "TWITTER";
+  username: string;
+  createdAt: string;
+}
 
 export default function Settings() {
   const navigate = useNavigate();
   const { address, chain } = useAccount();
   const { disconnect } = useDisconnect();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
 
-  // No endpoint to update profile, so these are read-only for now
-  const [displayName] = useState(user?.address ? `${user.address.slice(0, 6)}...${user.address.slice(-4)}` : "");
+  // Memoize display name - derived from address, no need for state
+  const displayName = useMemo(() => {
+    return user?.address ? `${user.address.slice(0, 6)}...${user.address.slice(-4)}` : "";
+  }, [user?.address]);
 
-  // Get linked social accounts
-  const lensAccount = user?.socials?.find((social) => social.type === "LENS");
-  const twitterAccount = user?.socials?.find((social) => social.type === "TWITTER");
+  // Memoize social account lookups to avoid recalculating on every render
+  const lensAccount = useMemo(() =>
+    user?.socials?.find((social: SocialAccount) => social.type === "LENS") as SocialAccount | undefined,
+    [user?.socials]
+  );
+
+  const twitterAccount = useMemo(() =>
+    user?.socials?.find((social: SocialAccount) => social.type === "TWITTER") as SocialAccount | undefined,
+    [user?.socials]
+  );
 
   const handleDisconnect = () => {
     disconnect();
     navigate("/");
   };
+
+  // Gate: Require wallet connection to view settings
+  // Settings page shows personal account information which requires authentication
+  if (!isAuthenticated || !address) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="container px-4 py-12 mx-auto">
+          <div className="max-w-2xl mx-auto">
+            <ConnectWalletPrompt
+              variant="card"
+              message="Connect your wallet to view and manage your account settings"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full">
@@ -65,11 +99,12 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Account Stats */}
+              {/* Account Stats - Summary of user activity */}
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <div className="bg-neutral-800 rounded-lg p-4">
                   <div className="text-2xl font-bold text-white">
-                    {user?.token?.length || 0}
+                    {/* Support both 'token' and 'tokens' properties for flexibility */}
+                    {(user as any)?.tokens?.length || (user as any)?.token?.length || 0}
                   </div>
                   <div className="text-sm text-neutral-400">Tokens Created</div>
                 </div>
@@ -101,7 +136,7 @@ export default function Settings() {
               </div>
 
               <div className="space-y-4">
-                {/* Lens Account */}
+                {/* Lens Account - Shows connected Lens Protocol profile */}
                 {lensAccount ? (
                   <div className="bg-neutral-800 rounded-lg p-4 border border-green-500/30">
                     <div className="flex items-center justify-between mb-2">
@@ -112,7 +147,7 @@ export default function Settings() {
                         <div>
                           <h3 className="font-semibold text-white flex items-center gap-2">
                             Lens Protocol
-                            <Check className="w-4 h-4 text-green-500" />
+                            <Check className="w-4 h-4 text-green-500" aria-label="Verified" />
                           </h3>
                           <p className="text-gray-400 text-sm">
                             @{lensAccount.username}
@@ -123,7 +158,8 @@ export default function Settings() {
                         href={`https://lens.xyz/u/${lensAccount.username}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-green-400 hover:text-green-300"
+                        className="text-green-400 hover:text-green-300 transition-colors"
+                        aria-label={`View @${lensAccount.username} on Lens Protocol`}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -146,7 +182,7 @@ export default function Settings() {
                   </div>
                 )}
 
-                {/* Twitter Account (Placeholder for future) */}
+                {/* Twitter Account - Future integration (currently not active) */}
                 {twitterAccount ? (
                   <div className="bg-neutral-800 rounded-lg p-4 border border-blue-500/30">
                     <div className="flex items-center justify-between mb-2">
@@ -157,7 +193,7 @@ export default function Settings() {
                         <div>
                           <h3 className="font-semibold text-white flex items-center gap-2">
                             Twitter (X)
-                            <Check className="w-4 h-4 text-blue-500" />
+                            <Check className="w-4 h-4 text-blue-500" aria-label="Verified" />
                           </h3>
                           <p className="text-gray-400 text-sm">
                             @{twitterAccount.username}
@@ -168,7 +204,8 @@ export default function Settings() {
                         href={`https://twitter.com/${twitterAccount.username}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300"
+                        className="text-blue-400 hover:text-blue-300 transition-colors"
+                        aria-label={`View @${twitterAccount.username} on Twitter`}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -252,11 +289,12 @@ export default function Settings() {
                 </div>
               )}
 
-              {/* Disconnect Button */}
+              {/* Disconnect Button - Securely disconnects wallet and clears session */}
               <div className="pt-4">
                 <button
                   onClick={handleDisconnect}
-                  className="w-full cursor-pointer border border-red-600 text-red-400 px-4 py-3 rounded-md font-semibold hover:bg-red-600/20 transition-colors"
+                  className="w-full cursor-pointer border border-red-600 text-red-400 px-4 py-3 rounded-md font-semibold hover:bg-red-600/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  aria-label="Disconnect wallet and return to home page"
                 >
                   Disconnect Wallet
                 </button>

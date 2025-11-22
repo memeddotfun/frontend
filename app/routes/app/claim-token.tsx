@@ -20,6 +20,7 @@ import {
   useFairLaunchData,
   useIsRefundable,
 } from "@/hooks/contracts/useMemedTokenSale";
+import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
 // Export the loader for this route
 export { memeTokenDetailLoader as loader };
 
@@ -29,7 +30,7 @@ export default function ClaimToken() {
     useLoaderData() as LoaderData<Token>;
   const navigate = useNavigate();
   const { address } = useAccount();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const { signMessageAsync } = useSignMessage();
   const { mutate: createNonce } = useCreateNonce();
 
@@ -400,13 +401,12 @@ export default function ClaimToken() {
             </div>
           )}
 
-          {/* Claim Button */}
-          {!address ? (
-            <div className="bg-yellow-500/10 border border-yellow-500 text-yellow-400 p-4 rounded-lg">
-              <p className="text-sm">
-                Please connect your wallet to claim this token
-              </p>
-            </div>
+          {/* Claim Button - gated behind authentication */}
+          {!isAuthenticated || !address ? (
+            <ConnectWalletPrompt
+              variant="inline"
+              message="Connect your wallet to claim this token"
+            />
           ) : (
             <button
               onClick={handleClaim}

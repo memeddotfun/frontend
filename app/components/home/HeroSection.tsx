@@ -1,11 +1,8 @@
 import { Link } from "react-router";
 import { MoveUpRight } from "lucide-react";
 import heroImage from "@/assets/images/heroChecks.svg";
-import { useAuthStore } from "@/store/auth";
 
 export function HeroSection() {
-  const { isAuthenticated } = useAuthStore();
-
   return (
     <section
       className="relative min-h-screen flex items-center justify-center px-4 pt-20"
@@ -25,10 +22,10 @@ export function HeroSection() {
         </p>
 
         <Link
-          to={isAuthenticated ? "/explore" : "/about"}
+          to="/explore"
           className="inline-flex items-center px-8 py-4 border border-green-700 bg-black text-white font-bold rounded-full hover:bg-green-700 transition-colors group focus:outline-none focus:ring-4 focus:ring-green-500/50"
         >
-          {isAuthenticated ? "Explore Tokens" : "Learn More"}
+          Explore Tokens
           <MoveUpRight
             size={15}
             className="ml-2 group-hover:translate-x-1 transition-transform"

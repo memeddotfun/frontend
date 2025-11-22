@@ -19,10 +19,11 @@ import { useRecentClaims } from "@/hooks/contracts/useRecentClaims";
 import { useGetUserClaimableRewards } from "@/hooks/contracts/useMemedBattle";
 import { useUserActiveNfts } from "@/hooks/contracts/useMemedWarriorNFT";
 import { useGetWarriorNFT } from "@/hooks/contracts/useMemedFactory";
+import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
 
 export default function EngagementRewards() {
   const { address } = useAccount();
-  const { user, isLoading: isLoadingUser } = useAuthStore();
+  const { user, isLoading: isLoadingUser, isAuthenticated } = useAuthStore();
 
   // Token selection state
   const [selectedTokenAddress, setSelectedTokenAddress] = useState<
@@ -400,26 +401,30 @@ export default function EngagementRewards() {
                                 {reward.token.slice(-4)}
                               </td>
 
-                              {/* Action Column */}
+                              {/* Action Column - gated behind authentication */}
                               <td className="py-4 px-4 text-right">
-                                <button
-                                  onClick={() => handleClaim(reward.rewardId)}
-                                  disabled={isProcessingThis}
-                                  className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-black cursor-pointer font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center justify-center gap-2 min-w-[100px]"
-                                >
-                                  {isProcessingThis ? (
-                                    <>
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                      <span className="hidden sm:inline">
-                                        {isClaimPending
-                                          ? "Signing..."
-                                          : "Claiming..."}
-                                      </span>
-                                    </>
-                                  ) : (
-                                    "Claim"
-                                  )}
-                                </button>
+                                {!isAuthenticated || !address ? (
+                                  <ConnectWalletPrompt variant="button" />
+                                ) : (
+                                  <button
+                                    onClick={() => handleClaim(reward.rewardId)}
+                                    disabled={isProcessingThis}
+                                    className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-black cursor-pointer font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center justify-center gap-2 min-w-[100px]"
+                                  >
+                                    {isProcessingThis ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span className="hidden sm:inline">
+                                          {isClaimPending
+                                            ? "Signing..."
+                                            : "Claiming..."}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      "Claim"
+                                    )}
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           );

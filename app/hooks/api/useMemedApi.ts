@@ -107,7 +107,7 @@ export interface LensEngagement {
 
 // Meme Token Hooks
 export function useMemeTokens(options?: UseApiOptions) {
-  return useApi<MemeToken[]>("/tokens", {
+  return useApi<MemeToken[]>(API_ENDPOINTS.TOKENS, {
     cacheKey: "meme-tokens",
     cacheDuration: 2 * 60 * 1000, // 2 minutes
     immediate: true,

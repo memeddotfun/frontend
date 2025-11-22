@@ -18,10 +18,11 @@ import {
 } from "@/hooks/contracts/useMemedEngageToEarn";
 import { useCreatorActivity } from "@/hooks/contracts/useCreatorActivity";
 import { useTokenHeat } from "@/hooks/contracts/useMemedFactory";
+import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
 
 export default function CreatorDashboard() {
   const { address } = useAccount();
-  const { user, isLoading: isLoadingUser } = useAuthStore();
+  const { user, isLoading: isLoadingUser, isAuthenticated } = useAuthStore();
 
   // Token selection state
   const [selectedTokenAddress, setSelectedTokenAddress] = useState<
@@ -386,28 +387,38 @@ export default function CreatorDashboard() {
                     </div>
                   )}
 
-                  <button
-                    onClick={handleClaim}
-                    disabled={!canClaim || isClaimPending || isClaimConfirming}
-                    className="w-full cursor-pointer bg-green-600 hover:bg-green-700 disabled:bg-neutral-800 disabled:border-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 text-gray-300 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-                  >
-                    {isClaimPending || isClaimConfirming ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {isClaimPending ? "Signing..." : "Claiming..."}
-                      </>
-                    ) : !canClaim ? (
-                      "No Available Balance"
-                    ) : (
-                      <>
-                        <Coins className="w-4 h-4" />
-                        Claim {formatTokenAmount(
-                          formatEther(unlockedBalance)
-                        )}{" "}
-                        {tokenName}
-                      </>
-                    )}
-                  </button>
+                  {/* Claim button - gated behind authentication */}
+                  {!isAuthenticated || !address ? (
+                    <div className="w-full">
+                      <ConnectWalletPrompt
+                        variant="inline"
+                        message="Connect your wallet to claim creator incentives"
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleClaim}
+                      disabled={!canClaim || isClaimPending || isClaimConfirming}
+                      className="w-full cursor-pointer bg-green-600 hover:bg-green-700 disabled:bg-neutral-800 disabled:border-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 text-gray-300 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      {isClaimPending || isClaimConfirming ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {isClaimPending ? "Signing..." : "Claiming..."}
+                        </>
+                      ) : !canClaim ? (
+                        "No Available Balance"
+                      ) : (
+                        <>
+                          <Coins className="w-4 h-4" />
+                          Claim {formatTokenAmount(
+                            formatEther(unlockedBalance)
+                          )}{" "}
+                          {tokenName}
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {/* Enhanced Info Box */}

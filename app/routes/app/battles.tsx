@@ -44,6 +44,7 @@ import { TokenCard, type TokenData } from "@/components/app/battles/TokenCard";
 import { EmptySlot } from "@/components/app/battles/EmptySlot";
 import { useDebounce } from "@/utils/debounce";
 import { useTokenDetailsMap } from "@/hooks/useTokenDetailsMap";
+import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
 
 // Battle status enum matching contract
 // 0 = NOT_STARTED (initial state, not used)
@@ -72,7 +73,7 @@ interface Battle {
 
 export default function Battles() {
   const { address } = useAccount();
-  const { user, isLoading: isLoadingUser } = useAuthStore();
+  const { user, isLoading: isLoadingUser, isAuthenticated } = useAuthStore();
 
   // Fetch all battles from contract with auto-refresh every 10 seconds
   const {
@@ -653,72 +654,77 @@ export default function Battles() {
   return (
     <div className="min-h-screen text-white">
       <div className="px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 lg:space-y-8 w-full">
-        {/* Wallet connection check */}
-        {!address ? (
-          <div className="max-w-4xl mx-auto bg-yellow-500/10 border border-yellow-500 text-yellow-400 p-4 rounded-lg text-center">
-            ⚠️ Please connect your wallet to participate in battles
+        {/* Create Battle Section - gated behind authentication */}
+        {!isAuthenticated || !address ? (
+          <div className="max-w-4xl mx-auto">
+            <ConnectWalletPrompt
+              variant="card"
+              message="Connect your wallet to create and participate in meme battles"
+            />
           </div>
-        ) : null}
+        ) : (
+          <>
+            {/* Top Decorative SVG */}
+            <div className="flex items-center justify-between w-full">
+              <img src={top} alt="" className="w-full" />
+            </div>
 
-        {/* Top Decorative SVG */}
-        <div className="flex items-center justify-between w-full">
-          <img src={top} alt="" className="w-full" />
-        </div>
+            {/* Token Selection Cards */}
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 lg:gap-24 xl:gap-32 justify-items-center max-w-6xl mx-auto">
+              {/* Meme A Selection */}
+              {selectedMemeA ? (
+                <TokenCard
+                  token={selectedMemeA}
+                  onRemove={() => setSelectedMemeA(null)}
+                />
+              ) : (
+                <EmptySlot
+                  onClick={() => handleOpenTokenSelector("memeA")}
+                  label="Select first meme"
+                />
+              )}
 
-        {/* Token Selection Cards */}
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 lg:gap-24 xl:gap-32 justify-items-center max-w-6xl mx-auto">
-          {/* Meme A Selection */}
-          {selectedMemeA ? (
-            <TokenCard
-              token={selectedMemeA}
-              onRemove={() => setSelectedMemeA(null)}
-            />
-          ) : (
-            <EmptySlot
-              onClick={() => handleOpenTokenSelector("memeA")}
-              label="Select first meme"
-            />
-          )}
+              {/* Meme B Selection */}
+              {selectedMemeB ? (
+                <TokenCard
+                  token={selectedMemeB}
+                  onRemove={() => setSelectedMemeB(null)}
+                />
+              ) : (
+                <EmptySlot
+                  onClick={() => handleOpenTokenSelector("memeB")}
+                  label="Select meme to start Battle"
+                />
+              )}
+            </div>
 
-          {/* Meme B Selection */}
-          {selectedMemeB ? (
-            <TokenCard
-              token={selectedMemeB}
-              onRemove={() => setSelectedMemeB(null)}
-            />
-          ) : (
-            <EmptySlot
-              onClick={() => handleOpenTokenSelector("memeB")}
-              label="Select meme to start Battle"
-            />
-          )}
-        </div>
+            {/* Bottom Decorative SVG with Start Battle Button */}
+            <div className="flex items-center justify-between w-full relative py-10">
+              <img src={bottom} alt="" className="w-full" />
 
-        {/* Bottom Decorative SVG with Start Battle Button */}
-        <div className="flex items-center justify-between w-full relative py-10">
-          <img src={bottom} alt="" className="w-full" />
-
-          <button
-            onClick={handleCreateBattle}
-            disabled={
-              !selectedMemeA ||
-              !selectedMemeB ||
-              isChallengePending ||
-              isChallengeConfirming ||
-              !address
-            }
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-t from-primary-900 to-black text-white px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer font-semibold"
-          >
-            {isChallengePending || isChallengeConfirming ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {isChallengePending ? "Confirm..." : "Creating..."}
-              </div>
-            ) : (
-              "START BATTLE"
-            )}
-          </button>
-        </div>
+              <button
+                onClick={handleCreateBattle}
+                disabled={
+                  !selectedMemeA ||
+                  !selectedMemeB ||
+                  isChallengePending ||
+                  isChallengeConfirming ||
+                  !address
+                }
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-t from-primary-900 to-black text-white px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer font-semibold"
+              >
+                {isChallengePending || isChallengeConfirming ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {isChallengePending ? "Confirm..." : "Creating..."}
+                  </div>
+                ) : (
+                  "START BATTLE"
+                )}
+              </button>
+            </div>
+          </>
+        )}
 
         {/* Success/Error Messages */}
         {isChallengeConfirmed && (

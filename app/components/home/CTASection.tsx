@@ -1,11 +1,8 @@
 import { Link } from "react-router";
 import { MoveUpRight } from "lucide-react";
-import { useAuthStore } from "@/store/auth";
 import footerImage from "@/assets/images/footerboxes.svg";
 
 export function CTASection() {
-  const { isAuthenticated } = useAuthStore();
-
   return (
     <section
       className="py-20 px-4 relative overflow-hidden"
@@ -28,10 +25,10 @@ export function CTASection() {
           </p>
 
           <Link
-            to={isAuthenticated ? "/explore" : "/about"}
+            to="/explore"
             className="inline-flex items-center px-8 py-4 bg-black text-white border border-green-700 rounded-full hover:bg-green-700 transition-colors group focus:outline-none focus:ring-4 focus:ring-green-500/50"
           >
-            {isAuthenticated ? "Explore Tokens" : "Learn More"}
+            Explore Tokens
             <MoveUpRight
               size={15}
               className="ml-2 group-hover:translate-x-1 transition-transform"
