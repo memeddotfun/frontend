@@ -114,6 +114,8 @@ export default function App() {
   // This runs once on mount to check if the user is already logged in.
   // It looks for a stored auth token and validates it with the backend.
   // If valid, the user is automatically logged in without needing to reconnect wallet.
+  // Note: Not passing disconnect function here as it's not available outside Web3Provider
+  // If session is stale, user will be prompted to connect wallet which handles disconnect
   useEffect(() => {
     useAuthStore.getState().verifySession();
   }, []); // Empty deps = runs only once on mount

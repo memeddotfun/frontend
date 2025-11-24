@@ -151,6 +151,10 @@ export function ClientConnectButton() {
           onError: (error: Error) => {
             console.error("Failed to sign message:", error);
             setSignInStatus("idle"); // Reset on error
+            // Auto-disconnect on signature failure (full disconnect: backend + wagmi)
+            // This handles cases where wallet provider is unavailable or stale
+            useAuthStore.getState().clearAuth();
+            disconnectWallet();
           },
         },
       );
@@ -161,10 +165,10 @@ export function ClientConnectButton() {
   useEffect(() => {
     if (authData?.message && signInStatus === "connecting") {
       console.log("Backend connection successful. Verifying session...");
-      useAuthStore.getState().verifySession();
+      useAuthStore.getState().verifySession(disconnect);
       setSignInStatus("idle"); // Reset after successful authentication
     }
-  }, [authData, signInStatus]);
+  }, [authData, signInStatus, disconnect]);
 
   // 4. Global error handling
   useEffect(() => {

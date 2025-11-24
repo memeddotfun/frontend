@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
           error: null,
         }),
-      verifySession: async () => {
+      verifySession: async (disconnect?: () => void) => {
         // Only set loading true if user is not already authenticated from persisted state
         if (!get().isAuthenticated) {
           set({ isLoading: true });
@@ -61,13 +61,17 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           console.log("Session verification failed, user is not logged in.");
-          // On any error, log the user out.
+          // On any error, log the user out and disconnect wallet if available
           set({
             user: null,
             isAuthenticated: false,
             isLoading: false, // Always set to false on completion
             error: error as Error,
           });
+          // Auto-disconnect wagmi if wallet is stale (frontend-only, session already expired)
+          if (disconnect) {
+            disconnect();
+          }
         }
       },
     }),
