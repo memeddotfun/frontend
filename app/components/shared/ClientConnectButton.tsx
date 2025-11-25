@@ -11,6 +11,7 @@ import {
 import { useAuthStore } from "@/store/auth";
 import { UserDetail } from "./UserDetail";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 export function ClientConnectButton() {
   const [mounted, setMounted] = useState(false);
@@ -150,11 +151,26 @@ export function ClientConnectButton() {
           },
           onError: (error: Error) => {
             console.error("Failed to sign message:", error);
-            setSignInStatus("idle"); // Reset on error
-            // Auto-disconnect on signature failure (full disconnect: backend + wagmi)
-            // This handles cases where wallet provider is unavailable or stale
-            useAuthStore.getState().clearAuth();
-            disconnectWallet();
+            setSignInStatus("idle");
+
+            // Distinguish between user rejection vs technical failure
+            const isUserRejection =
+              error.name === "UserRejectedRequestError" ||
+              error.message?.toLowerCase().includes("user rejected") ||
+              error.message?.toLowerCase().includes("user denied") ||
+              error.message?.toLowerCase().includes("user cancelled");
+
+            if (isUserRejection) {
+              // User intentionally rejected signature - just reset state, allow retry
+              // Don't disconnect wallet, they might want to try again
+              toast.error("Signature rejected. Please try again when ready.");
+            } else {
+              // Technical failure (wallet provider stale, network error, etc.)
+              // Auto-disconnect to clear stuck state
+              toast.error("Wallet connection error. Please reconnect your wallet.");
+              useAuthStore.getState().clearAuth();
+              disconnectWallet();
+            }
           },
         },
       );
@@ -170,18 +186,27 @@ export function ClientConnectButton() {
     }
   }, [authData, signInStatus, disconnect]);
 
-  // 4. Global error handling
+  // 4. Global error handling - Show specific errors to users
   useEffect(() => {
     if (nonceError || authError) {
-      console.error(
-        "An error occurred during the auth flow:",
-        nonceError || authError,
-      );
-      // Reset status and auth attempt flag after error to allow retry
-      setTimeout(() => {
-        setSignInStatus("idle");
-        setAuthAttempted(false);
-      }, 3000); // Wait 3 seconds before allowing retry
+      const error = nonceError || authError;
+      console.error("Auth flow error:", error);
+
+      // Show user-friendly error message based on error type
+      if (error?.message?.includes("Failed to fetch") || error?.message?.includes("NetworkError")) {
+        toast.error("Network error. Please check your connection and try again.");
+      } else if (error?.message?.includes("timeout")) {
+        toast.error("Connection timeout. Please try again.");
+      } else if (error?.message?.includes("500") || error?.message?.includes("Internal Server")) {
+        toast.error("Server error. Please try again in a moment.");
+      } else {
+        // Generic error with the actual message
+        toast.error(`Connection failed: ${error?.message || "Unknown error"}`);
+      }
+
+      // Reset state immediately (no 3-second delay) to allow quick retry
+      setSignInStatus("idle");
+      setAuthAttempted(false);
     }
   }, [nonceError, authError]);
 

@@ -24,7 +24,7 @@
 
 "use client";
 
-import { WagmiProvider, createConfig, http } from "wagmi";
+import { WagmiProvider, createConfig, http, fallback } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 import { env } from "../utils/env";
@@ -42,13 +42,35 @@ const config = createConfig(
     // Which blockchain networks to support
     chains: chainConfig.chains,
 
-    // How to connect to each chain (RPC endpoints)
-    // Maps chain ID → HTTP endpoint (e.g., 8453 → "https://mainnet.base.org")
+    // How to connect to each chain (RPC endpoints with fallbacks)
+    // Uses multiple RPC providers for reliability - if one fails, automatically tries the next
+    // This prevents "connection failed" errors from single point of failure
     transports: Object.fromEntries(
-      chainConfig.chains.map(chain => [
-        chain.id,
-        http(chainConfig.transports[chain.id])
-      ])
+      chainConfig.chains.map(chain => {
+        const primaryRpc = chainConfig.transports[chain.id];
+
+        // Configure fallback RPCs based on chain
+        // Base Sepolia (testnet): Multiple public endpoints
+        // Base Mainnet (production): Primary + reliable fallbacks
+        const fallbackRpcs = chain.id === 84532 // Base Sepolia
+          ? [
+              'https://base-sepolia.blockpi.network/v1/rpc/public',
+              'https://sepolia.base.org'
+            ]
+          : [  // Base Mainnet (8453)
+              'https://base.blockpi.network/v1/rpc/public',
+              'https://mainnet.base.org',
+              'https://base.meowrpc.com'
+            ];
+
+        return [
+          chain.id,
+          fallback([
+            http(primaryRpc),  // Try primary RPC first
+            ...fallbackRpcs.map(url => http(url))  // Then try fallbacks in order
+          ])
+        ];
+      })
     ),
 
     // WalletConnect configuration (for mobile wallets like Rainbow, Trust Wallet)

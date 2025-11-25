@@ -47,6 +47,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await apiClient.get<GetUserResponse>(
             API_ENDPOINTS.GET_USER,
+            { timeout: 5000 } // 5 second timeout to prevent blocking wallet initialization
           );
           console.log(response);
           if (response.data?.user) {

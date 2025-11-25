@@ -84,7 +84,13 @@ export interface ConnectSocialResponse {
   message: string;
 }
 
-const CREATE_NONCE_OPTIONS = { method: "POST", retries: 0 };
+// Retry configuration for critical auth endpoints
+// Network blips or temporary backend issues shouldn't block authentication
+const CREATE_NONCE_OPTIONS = {
+  method: "POST",
+  retries: 2,  // Retry up to 2 times on failure
+  retryDelay: 1000  // Wait 1 second between retries
+};
 
 /**
  * Hook to create a nonce for authentication
@@ -97,7 +103,13 @@ export function useCreateNonce() {
   );
 }
 
-const CONNECT_WALLET_OPTIONS = { method: "POST" };
+// Retry configuration for wallet connection
+// Most critical step - should be resilient to temporary failures
+const CONNECT_WALLET_OPTIONS = {
+  method: "POST",
+  retries: 2,  // Retry up to 2 times on failure
+  retryDelay: 1000  // Wait 1 second between retries
+};
 
 /**
  * Hook to connect wallet and verify signature
