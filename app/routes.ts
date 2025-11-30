@@ -5,6 +5,8 @@ export default [
   route("*", "routes/$.tsx"),
   route("about", "routes/about.tsx"),
   route("contact", "routes/contact.tsx"),
+  // Auth callback routes
+  route("instagram-callback", "routes/auth/instagram/callback.tsx"),
   //Nested routes
   route("", "routes/app/app.tsx", [
     route("explore", "routes/app/explore.tsx"),

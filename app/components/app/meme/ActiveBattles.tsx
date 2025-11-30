@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { SwordsIcon, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { BattleCard } from "@/components/shared/BattleCard";
-import { useGetBattles } from "@/hooks/contracts/useMemedBattle";
+import { useGetBattles, useGetBattleScore } from "@/hooks/contracts/useMemedBattle";
 import { useTokenDetailsMap } from "@/hooks/useTokenDetailsMap";
 
 // Battle status enum
@@ -26,6 +26,44 @@ interface Battle {
 interface ActiveBattlesProps {
   tokenAddress: `0x${string}`;
 }
+
+/**
+ * Component that fetches battle scores from contract and renders a BattleCard.
+ * Separated to allow each battle to have its own score query hook.
+ */
+interface BattleCardWithScoreProps {
+  battle: Battle;
+  memeADetails: { name: string; image: string };
+  memeBDetails: { name: string; image: string };
+}
+
+const BattleCardWithScore = ({ battle, memeADetails, memeBDetails }: BattleCardWithScoreProps) => {
+  // Fetch battle scores from contract
+  const { data: scoreData } = useGetBattleScore(battle.battleId);
+
+  // scoreData is a tuple: [scoreA, scoreB, heatScoreA, heatScoreB, valueScoreA, valueScoreB]
+  const scoreA = scoreData ? Number(scoreData[0]) : 0;
+  const scoreB = scoreData ? Number(scoreData[1]) : 0;
+
+  // Calculate percentages from contract scores
+  const total = scoreA + scoreB;
+  const percentageA = total > 0 ? (scoreA / total) * 100 : 50;
+  const percentageB = 100 - percentageA;
+
+  return (
+    <BattleCard
+      key={Number(battle.battleId)}
+      leftImage={memeADetails.image}
+      rightImage={memeBDetails.image}
+      leftLabel={memeADetails.name}
+      rightLabel={memeBDetails.name}
+      leftViews={`${Number(battle.heatA).toLocaleString()} Heat`}
+      rightViews={`${Number(battle.heatB).toLocaleString()} Heat`}
+      leftPercentage={percentageA}
+      rightPercentage={percentageB}
+    />
+  );
+};
 
 const ActiveBattles = ({ tokenAddress }: ActiveBattlesProps) => {
   // Pagination state - show 2 battles per page to match the grid
@@ -135,6 +173,7 @@ const ActiveBattles = ({ tokenAddress }: ActiveBattlesProps) => {
         // Battle Cards Grid
         <div className="grid lg:grid-cols-2 gap-6">
           {currentBattles.map((battle) => {
+            // Get token details for display
             const memeADetails = tokenDetailsMap[battle.memeA.toLowerCase()] || {
               name: `${battle.memeA.slice(0, 6)}...`,
               image: "",
@@ -144,30 +183,13 @@ const ActiveBattles = ({ tokenAddress }: ActiveBattlesProps) => {
               image: "",
             };
 
-            // Calculate battle scores (Heat 60% + NFTs 40%)
-            const calculateBattleScore = (heat: bigint, nfts: bigint): number => {
-              const heatScore = Number(heat) * 0.6;
-              const nftScore = Number(nfts) * 0.4;
-              return heatScore + nftScore;
-            };
-
-            const scoreA = calculateBattleScore(battle.heatA, battle.memeANftsAllocated);
-            const scoreB = calculateBattleScore(battle.heatB, battle.memeBNftsAllocated);
-            const total = scoreA + scoreB;
-            const percentageA = total > 0 ? (scoreA / total) * 100 : 50;
-            const percentageB = 100 - percentageA;
-
+            // Use BattleCardWithScore component which fetches scores from contract
             return (
-              <BattleCard
+              <BattleCardWithScore
                 key={Number(battle.battleId)}
-                leftImage={memeADetails.image}
-                rightImage={memeBDetails.image}
-                leftLabel={memeADetails.name}
-                rightLabel={memeBDetails.name}
-                leftViews={`${Number(battle.heatA).toLocaleString()} Heat`}
-                rightViews={`${Number(battle.heatB).toLocaleString()} Heat`}
-                leftPercentage={percentageA}
-                rightPercentage={percentageB}
+                battle={battle}
+                memeADetails={memeADetails}
+                memeBDetails={memeBDetails}
               />
             );
           })}

@@ -54,7 +54,7 @@ export interface Token {
 
 export interface Social {
   id: string;
-  type: "LENS" | "TWITTER";
+  type: "LENS" | "TWITTER" | "INSTAGRAM";
   username: string;
   accountId: string;
   createdAt: string;

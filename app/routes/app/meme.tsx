@@ -334,6 +334,11 @@ export default function Meme() {
     );
   }
 
+  // Extract Lens handle from token creator's social data
+  const lensHandle = token?.user?.socials?.find(
+    (social: any) => social.type === "LENS"
+  )?.username;
+
   return (
     <div className="min-h-screen w-full">
       <div className="px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 lg:space-y-8 w-full">
@@ -351,7 +356,7 @@ export default function Meme() {
         <div className="flex flex-col xl:flex-row gap-4 md:gap-6 xl:gap-8 w-full">
           {/* Left Section: Social Stats + Launch Progress */}
           <div className="flex-1 min-w-0 space-y-4 sm:space-y-6">
-            <SocialMediaStats />
+            <SocialMediaStats lensHandle={lensHandle} />
 
             {/* Mint Warriors Button - Only visible in launched phase (status 3) */}
             {currentPhase === 3 && (

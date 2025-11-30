@@ -1,9 +1,10 @@
 import { toast } from "sonner";
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router";
-import { ChevronRightIcon, LinkIcon, Check } from "lucide-react";
+import { ChevronRightIcon, LinkIcon, Check, Instagram } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { useConnectSocial, type Social } from "@/hooks/api/useAuth";
+import { apiClient } from "@/lib/api/client";
 
 interface Account {
   username: {
@@ -32,9 +33,14 @@ export default function ConnectProfile({
   const [isLoadingTokenData, setIsLoadingTokenData] = useState(true);
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [lensUsername, setLensUsername] = useState("");
+  const [isConnectingInstagram, setIsConnectingInstagram] = useState(false);
 
   const isLensLinked = useMemo(() => {
     return user?.socials.some((social) => social.type === "LENS");
+  }, [user]);
+
+  const isInstagramLinked = useMemo(() => {
+    return user?.socials.some((social) => social.type === "INSTAGRAM");
   }, [user]);
 
   useEffect(() => {
@@ -65,8 +71,37 @@ export default function ConnectProfile({
       setLensUsername("");
     } catch (err) {
       toast.error(
-        (err as Error).message || `Failed to link ${platform} account.`,
+        (err as Error).message || `Failed to link ${platform} account.`
       );
+    }
+  };
+
+  /**
+   * Handle Instagram OAuth flow
+   * 1. Fetch OAuth URL from backend
+   * 2. Redirect user to Instagram for authorization
+   */
+  const handleInstagramAuth = async () => {
+    try {
+      setIsConnectingInstagram(true);
+      console.log("Fetching Instagram OAuth URL...");
+
+      // Fetch the OAuth URL from backend using API client directly
+      const response = await apiClient.get<{ url: string }>("/api/get-instagram-auth-url");
+
+      console.log("Instagram auth URL response:", response);
+
+      if (response.data?.url) {
+        console.log("Redirecting to Instagram authorization:", response.data.url);
+        // Redirect to Instagram OAuth page
+        window.location.href = response.data.url;
+      } else {
+        throw new Error("Failed to get Instagram authorization URL");
+      }
+    } catch (err) {
+      console.error("Instagram auth error:", err);
+      toast.error("Failed to initiate Instagram connection");
+      setIsConnectingInstagram(false);
     }
   };
 
@@ -87,7 +122,7 @@ export default function ConnectProfile({
             Connect Socials
           </h1>
           <p className="text-sm text-neutral-400">
-            Link your social accounts to enhance visibility
+            Link at least one social account (Lens or Instagram) to continue
           </p>
         </div>
 
@@ -154,15 +189,53 @@ export default function ConnectProfile({
               </div>
             </div>
           )}
+
+          {/* Instagram - OAuth Flow */}
+          {!isInstagramLinked && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-neutral-400">
+                  Instagram Business Account
+                </label>
+              </div>
+              <button
+                onClick={handleInstagramAuth}
+                disabled={isConnectingInstagram}
+                className="w-full px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium rounded cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Instagram size={18} />
+                {isConnectingInstagram ? "Connecting..." : "Connect Instagram Business"}
+              </button>
+              <div className="mt-2 bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                <p className="text-xs text-purple-300 font-medium mb-1">
+                  ⚠️ Business Accounts Only
+                </p>
+                <p className="text-xs text-neutral-400">
+                  Only Instagram Business accounts can be linked. Personal accounts will be rejected.{" "}
+                  <a
+                    href="https://help.instagram.com/502981923235522"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-400 hover:text-purple-300 underline"
+                  >
+                    Learn how to convert
+                  </a>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Mintable Status Warning */}
         {!isMintableLoading && isMintable === false && (
           <div className="mt-8 bg-red-500/10 border border-red-500 text-red-400 p-4 rounded-lg">
-            <h3 className="text-sm font-semibold mb-1">❌ Not Eligible to Launch</h3>
+            <h3 className="text-sm font-semibold mb-1">
+              ❌ Not Eligible to Launch
+            </h3>
             <p className="text-xs text-red-300">
               Your wallet address is not currently eligible to launch tokens.
-              Please check the eligibility requirements or contact support for more information.
+              Please check the eligibility requirements or contact support for
+              more information.
             </p>
           </div>
         )}

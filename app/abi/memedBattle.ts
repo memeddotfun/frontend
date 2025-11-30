@@ -334,6 +334,20 @@ export const memedBattleAbi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "ENGAGEMENT_WEIGHT",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "VALUE_WEIGHT",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       { internalType: "uint256", name: "_battleId", type: "uint256" },
       { internalType: "bool", name: "_accept", type: "bool" },
@@ -514,6 +528,20 @@ export const memedBattleAbi = [
         name: "",
         type: "tuple",
       },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_battleId", type: "uint256" }],
+    name: "getBattleScore",
+    outputs: [
+      { internalType: "uint256", name: "scoreA", type: "uint256" },
+      { internalType: "uint256", name: "scoreB", type: "uint256" },
+      { internalType: "uint256", name: "heatScoreA", type: "uint256" },
+      { internalType: "uint256", name: "heatScoreB", type: "uint256" },
+      { internalType: "uint256", name: "valueScoreA", type: "uint256" },
+      { internalType: "uint256", name: "valueScoreB", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",

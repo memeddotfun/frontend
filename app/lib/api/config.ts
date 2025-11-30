@@ -370,6 +370,22 @@ export const API_ENDPOINTS = {
   CONNECT_SOCIAL: "/api/connect-social",
 
   /**
+   * GET /api/get-instagram-auth-url
+   * Get Instagram OAuth authorization URL
+   * Returns: { url: string } - Full OAuth URL to redirect user to
+   */
+  INSTAGRAM_AUTH_URL: "/api/get-instagram-auth-url",
+
+  /**
+   * POST /api/connect-instagram-auth
+   * Link Instagram Business account to user
+   * Body: { code: string } - Authorization code from Instagram OAuth callback
+   * Returns: { message: string } - Success message
+   * Validates: Only Business Instagram accounts accepted
+   */
+  CONNECT_INSTAGRAM: "/api/connect-instagram-auth",
+
+  /**
    * POST /api/disconnect-wallet
    * Log out user, clear session
    * Body: none

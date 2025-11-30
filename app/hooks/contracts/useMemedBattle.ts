@@ -294,3 +294,29 @@ export function useGetNftRewardAndIsReturnable(
     },
   });
 }
+
+/**
+ * Hook to get battle scores from the contract.
+ * Returns the calculated scores for both memes in a battle.
+ * @param battleId The ID of the battle to get scores for
+ * @returns {
+ *   scoreA: Final score for meme A,
+ *   scoreB: Final score for meme B,
+ *   heatScoreA: Heat component for A,
+ *   heatScoreB: Heat component for B,
+ *   valueScoreA: NFT value component for A,
+ *   valueScoreB: NFT value component for B
+ * }
+ */
+export function useGetBattleScore(battleId: bigint | undefined) {
+  return useReadContract({
+    address: BATTLE_ADDRESS,
+    abi: memedBattleAbi,
+    functionName: "getBattleScore",
+    args: battleId !== undefined ? [battleId] : undefined,
+    query: {
+      enabled: battleId !== undefined,
+      refetchInterval: 5000, // Refetch every 5 seconds for live score updates
+    },
+  });
+}

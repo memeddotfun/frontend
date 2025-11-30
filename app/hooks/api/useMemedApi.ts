@@ -241,6 +241,20 @@ export function useLensEngagement(postId: string, options?: UseApiOptions) {
   });
 }
 
+/**
+ * Fetch lens engagement metrics by Lens handle
+ * @param handle - The Lens handle (username) to fetch engagement for
+ */
+export function useLensEngagementByHandle(handle: string | undefined, options?: UseApiOptions) {
+  return useApi<LensEngagement>(`/lens-engagement/${handle}`, {
+    cacheKey: `lens-engagement-handle-${handle}`,
+    cacheDuration: 5 * 60 * 1000, // 5 minutes
+    immediate: !!handle,
+    deps: [handle],
+    ...options,
+  });
+}
+
 export function useUpdateLensEngagement() {
   return useApiMutation<
     LensEngagement,
@@ -248,6 +262,32 @@ export function useUpdateLensEngagement() {
       postId: string;
     }
   >("/lens/engagement/update");
+}
+
+// Instagram Integration Hooks
+/**
+ * Get Instagram OAuth authorization URL from backend
+ * Returns the full URL to redirect user to for Instagram authorization
+ */
+export function useInstagramAuthUrl(options?: UseApiOptions) {
+  return useApi<{ url: string }>("/api/get-instagram-auth-url", {
+    cacheKey: "instagram-auth-url",
+    cacheDuration: 10 * 60 * 1000, // 10 minutes - URL doesn't change frequently
+    immediate: false, // Only fetch when explicitly called
+    ...options,
+  });
+}
+
+/**
+ * Connect Instagram Business account using OAuth code
+ * Sends authorization code to backend for token exchange and account linking
+ * @param code - Authorization code from Instagram OAuth callback
+ */
+export function useConnectInstagram() {
+  return useApiMutation<
+    { message: string },
+    { code: string }
+  >("/api/connect-instagram-auth");
 }
 
 // Analytics Hooks

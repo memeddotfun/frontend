@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { User, Wallet, Check, Settings2, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { User, Wallet, Check, Settings2, Link as LinkIcon, ExternalLink, Instagram } from "lucide-react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import { useNavigate } from "react-router";
@@ -7,7 +7,7 @@ import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
 
 // Type definitions for better type safety
 interface SocialAccount {
-  type: "LENS" | "TWITTER";
+  type: "LENS" | "TWITTER" | "INSTAGRAM";
   username: string;
   createdAt: string;
 }
@@ -31,6 +31,11 @@ export default function Settings() {
 
   const twitterAccount = useMemo(() =>
     user?.socials?.find((social: SocialAccount) => social.type === "TWITTER") as SocialAccount | undefined,
+    [user?.socials]
+  );
+
+  const instagramAccount = useMemo(() =>
+    user?.socials?.find((social: SocialAccount) => social.type === "INSTAGRAM") as SocialAccount | undefined,
     [user?.socials]
   );
 
@@ -225,6 +230,52 @@ export default function Settings() {
                       <div className="flex-1">
                         <h3 className="font-semibold text-white">Twitter (X)</h3>
                         <p className="text-gray-500 text-sm">Coming soon</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Instagram Account - Shows connected Instagram Business account */}
+                {instagramAccount ? (
+                  <div className="bg-neutral-800 rounded-lg p-4 border border-purple-500/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                          <Instagram className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-white flex items-center gap-2">
+                            Instagram
+                            <Check className="w-4 h-4 text-purple-500" aria-label="Verified" />
+                          </h3>
+                          <p className="text-gray-400 text-sm">
+                            @{instagramAccount.username}
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href={`https://instagram.com/${instagramAccount.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-400 hover:text-purple-300 transition-colors"
+                        aria-label={`View @${instagramAccount.username} on Instagram`}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                    <div className="text-xs text-neutral-500 mt-2">
+                      Linked {new Date(instagramAccount.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-neutral-800 rounded-lg p-4 border border-neutral-700">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-neutral-700 rounded-full flex items-center justify-center">
+                        <Instagram className="w-5 h-5 text-neutral-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white">Instagram</h3>
+                        <p className="text-gray-500 text-sm">Not linked</p>
                       </div>
                     </div>
                   </div>
