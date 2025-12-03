@@ -5,6 +5,8 @@ export default [
   route("*", "routes/$.tsx"),
   route("about", "routes/about.tsx"),
   route("contact", "routes/contact.tsx"),
+  route("privacy", "routes/privacy.tsx"),
+  route("terms", "routes/terms.tsx"),
   // Auth callback routes
   route("instagram-callback", "routes/auth/instagram/callback.tsx"),
   //Nested routes
@@ -26,6 +28,9 @@ export default [
     route("claim-token/:memeId", "routes/app/claim-token.tsx"),
 
     //admin routes
-    route("admin/create-unclaimed-token", "routes/admin/create-unclaimed-token.tsx"),
+    route(
+      "admin/create-unclaimed-token",
+      "routes/admin/create-unclaimed-token.tsx"
+    ),
   ]),
 ] satisfies RouteConfig;

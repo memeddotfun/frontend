@@ -166,15 +166,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
           </div>
 
-          <div className="px-4 mt-8 pt-8 border-t border-neutral-800">
-            <NavLink
-              to="/terms"
-              className="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-gradient-to-t from-primary-900 to-black hover:border-t hover:border-b border-primary-900  hover:shadow-[inset_0_0_20px_rgba(34,197,94,0.2),inset_0_0_40px_rgba(0,0,0,0.3)]  duration-300  rounded-lg transition-colors"
-            >
-              <FileText className="w-5 h-5" />
-              <span className="font-medium">Terms</span>
-            </NavLink>
-          </div>
+           <div className="px-4 mt-8 pt-8 border-t border-neutral-800">
+             <NavLink
+               to="/privacy"
+               className="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-gradient-to-t from-primary-900 to-black hover:border-t hover:border-b border-primary-900  hover:shadow-[inset_0_0_20px_rgba(34,197,94,0.2),inset_0_0_40px_rgba(0,0,0,0.3)]  duration-300  rounded-lg transition-colors mb-2"
+             >
+               <Shield className="w-5 h-5" />
+               <span className="font-medium">Privacy</span>
+             </NavLink>
+             <NavLink
+               to="/terms"
+               className="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-gradient-to-t from-primary-900 to-black hover:border-t hover:border-b border-primary-900  hover:shadow-[inset_0_0_20px_rgba(34,197,94,0.2),inset_0_0_40px_rgba(0,0,0,0.3)]  duration-300  rounded-lg transition-colors"
+             >
+               <FileText className="w-5 h-5" />
+               <span className="font-medium">Terms</span>
+             </NavLink>
+           </div>
         </nav>
 
         <div className="p-4">

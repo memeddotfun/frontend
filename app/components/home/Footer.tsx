@@ -12,6 +12,8 @@ export function Footer() {
     { label: "About", href: "/about" },
     { label: "Explore", href: "/explore" },
     { label: "Contact", href: "/contact" },
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
     // { label: "Launch App", href: "/app" },
   ];
 
