@@ -26,10 +26,12 @@ Add Privacy Policy and Terms of Service pages to the Memed.fun website. Include 
 ## Review Section
 ### Changes Made
 1. **Created app/routes/privacy.tsx**: New route file with comprehensive privacy policy content
-2. **Created app/routes/terms.tsx**: New route file with terms of service content
+2. **Created app/routes/terms.tsx**: New route file with comprehensive terms of service content including account deletion instructions, matching privacy page design
 3. **Updated components/home/Footer.tsx**: Added "Privacy" and "Terms" links to footer navigation
 4. **Updated components/app/Sidebar.tsx**: Added "Privacy" link to sidebar navigation (Terms was already present)
 5. **Updated app/routes.ts**: Added terms route and fixed duplicate route error
+6. **Fixed page layout**: Both privacy and terms pages now use consistent `pt-24 pb-16` padding to prevent header overlap
+7. **Made email addresses clickable**: All email addresses in both pages now have proper mailto: links with green styling
 
 ### Technical Details
 - Both pages follow consistent structure with Header, MobileMenu, main content, and Footer
