@@ -259,8 +259,8 @@ const LaunchProgress = ({ tokenId }: LaunchProgressProps) => {
         <div className="mt-4 text-center">
           <div className="text-xs text-neutral-400">
             Status: {fairLaunchStatus === 0 ? "Active" : 
-                     fairLaunchStatus === 1 ? "Successful" :
-                     fairLaunchStatus === 2 ? "Failed" : "Unknown"}
+                     fairLaunchStatus === 1 ? "Ongoing" :
+                     fairLaunchStatus === 2 ? "Failed" : "Ended"}
           </div>
           {fairLaunchStartTime > 0n && (
             <div className="text-xs text-neutral-400 mt-1">
