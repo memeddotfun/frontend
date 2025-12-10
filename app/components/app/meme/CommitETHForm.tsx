@@ -193,12 +193,6 @@ const CommitETHForm = ({ tokenId, tokenName, tokenSymbol: memeTokenSymbol, onCom
   const handleCommitClick = () => {
     if (ethAmountInWei === 0n) return;
 
-    console.log("🚀 Starting commit flow...", {
-      tokenId: tokenId.toString(),
-      amount: ethAmountInWei.toString(),
-      address,
-    });
-
     setFlowState("committing");
 
     // Send native ETH directly via value parameter
@@ -211,7 +205,6 @@ const CommitETHForm = ({ tokenId, tokenName, tokenSymbol: memeTokenSymbol, onCom
   // Reset flow state if user cancelled wallet popup (isPending goes false without confirmation)
   useEffect(() => {
     if (flowState === "committing" && !isCommitting && !isConfirmingCommit && !isCommitConfirmed && !commitError) {
-      console.log("⚠️ Commit was cancelled by user (wallet popup closed)");
       setFlowState("idle");
     }
   }, [flowState, isCommitting, isConfirmingCommit, isCommitConfirmed, commitError]);

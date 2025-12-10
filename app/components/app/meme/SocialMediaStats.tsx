@@ -32,11 +32,6 @@ const SocialMediaStats = ({ tokenAddress }: SocialMediaStatsProps) => {
   // Log engagement data for debugging and verification
   useEffect(() => {
     if (engagementData) {
-      console.log("=== MULTI-PLATFORM ENGAGEMENT DATA ===");
-      console.log("Token Address:", tokenAddress);
-      console.log("Platforms:", engagementData.engagements.map(e => e.type).join(", "));
-      console.log("Full Data:", engagementData);
-      console.log("======================================");
     }
   }, [engagementData, tokenAddress]);
 

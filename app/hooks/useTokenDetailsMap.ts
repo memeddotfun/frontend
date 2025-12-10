@@ -10,6 +10,7 @@ export interface TokenDetails {
   image: string;
   ticker?: string; // Only included when includeExtendedFields is true
   address?: `0x${string}`; // Only included when includeExtendedFields is true
+  id?: string; // Token UUID (memeId) for routing - only included when includeExtendedFields is true
 }
 
 /**
@@ -123,6 +124,7 @@ export function useTokenDetailsMap(
                 ...(includeExtendedFields && {
                   ticker: token.metadata?.ticker || "???",
                   address: token.address as `0x${string}`,
+                  id: token.id, // Include memeId for routing
                 }),
               };
             }
@@ -186,6 +188,7 @@ export function useTokenDetailsMap(
                 ...(includeExtendedFields && {
                   ticker: tokenMetadata.ticker || "???",
                   address: tokenData.address || (address as `0x${string}`),
+                  id: tokenData.id, // Include memeId for routing
                 }),
               };
             } else if (!signal.aborted) {
@@ -257,6 +260,7 @@ export function useTokenDetailsMap(
                     image: tokenMetadata.imageKey || tokenData.image?.s3Key || "",
                     ticker: tokenMetadata.ticker || "???",
                     address: tokenData.address || (address as `0x${string}`),
+                    id: tokenData.id, // Include memeId for routing
                   };
                 } else if (!signal.aborted) {
                   // Use fallback if not found

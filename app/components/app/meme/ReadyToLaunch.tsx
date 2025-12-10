@@ -61,9 +61,6 @@ const ReadyToLaunch = ({ tokenId, fairLaunchData }: ReadyToLaunchProps) => {
     : 0;
 
   // Log for debugging
-  console.log("ReadyToLaunch - Status:", status);
-  console.log("ReadyToLaunch - Total Committed:", totalCommitted.toString());
-  console.log("ReadyToLaunch - Uniswap Pair:", uniswapPair);
 
   return (
     <div className="bg-neutral-900 border border-green-500/50 p-6 rounded-xl">

@@ -75,7 +75,6 @@ const ClaimTokenPanel = ({
   // Reset claimStarted when there's an error or when claim is confirmed
   useEffect(() => {
     if (claimError) {
-      console.log("Claim error detected, resetting claimStarted:", claimError);
       setClaimStarted(false);
     }
   }, [claimError]);
@@ -83,7 +82,6 @@ const ClaimTokenPanel = ({
   // Reset claimStarted when claim is successfully confirmed
   useEffect(() => {
     if (isClaimConfirmed) {
-      console.log("Claim confirmed, resetting claimStarted");
       setClaimStarted(false);
     }
   }, [isClaimConfirmed]);
@@ -91,7 +89,6 @@ const ClaimTokenPanel = ({
   // Set claimStarted when transaction begins
   useEffect(() => {
     if (isClaiming || isConfirmingClaim) {
-      console.log("Claim transaction starting, setting claimStarted");
       setClaimStarted(true);
     }
   }, [isClaiming, isConfirmingClaim]);
@@ -106,9 +103,6 @@ const ClaimTokenPanel = ({
       !claimError &&
       !isClaimConfirmed
     ) {
-      console.log(
-        "Transaction no longer pending without error or confirmation - likely cancelled"
-      );
       // Reset after a brief delay to ensure error has time to populate
       const timeoutId = setTimeout(() => {
         setClaimStarted(false);

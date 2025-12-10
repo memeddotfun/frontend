@@ -56,7 +56,6 @@ const LaunchProgress = ({ tokenId }: LaunchProgressProps) => {
   // Automatically switch to correct chain if on wrong network
   useEffect(() => {
     if (!isCorrectNetwork && switchChain) {
-      console.log(`Auto-switching to ${activeChain.name}...`);
       switchChain({ chainId: activeChain.id });
     }
   }, [isCorrectNetwork, switchChain, activeChain.id, activeChain.name]);

@@ -44,7 +44,7 @@ const CountdownTimer = ({ tokenId }: CountdownTimerProps) => {
       // Check if countdown has expired
       if (remaining <= 0n) {
         setIsExpired(true);
-        setTimeRemaining("Expired");
+        setTimeRemaining("Ended");
         return;
       }
 

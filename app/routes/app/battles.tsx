@@ -263,6 +263,11 @@ export default function Battles() {
     setCurrentPage(1);
   }, [statusFilter]);
 
+  // Refetch battles data on mount to ensure fresh data when navigating to the page
+  useEffect(() => {
+    refetchBattles();
+  }, [refetchBattles]);
+
   // Handle successful battle creation
   useEffect(() => {
     if (isChallengeConfirmed) {
@@ -661,6 +666,7 @@ export default function Battles() {
         ticker: "???",
         image: "",
         address: address,
+        id: undefined, // No memeId available for fallback
       };
     },
     [tokenDetailsMap]
@@ -755,211 +761,6 @@ export default function Battles() {
             <span>
               Error: {challengeError.message || "Failed to create battle"}
             </span>
-          </div>
-        )}
-
-        {/* Pending Challenges Section - Show challenges to user's tokens */}
-        {pendingChallenges.length > 0 && address && (
-          <div className="max-w-6xl mx-auto mb-6">
-            <div className="bg-gradient-to-r from-yellow-500/5 to-orange-500/5 border border-yellow-500/30 rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Swords className="w-6 h-6 text-yellow-400" />
-                <div className="flex-1">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    Challenges to Your Tokens
-                    <span className="bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 text-sm font-bold px-2 py-1 rounded-full">
-                      {pendingChallenges.length}
-                    </span>
-                  </h2>
-                  <p className="text-neutral-300 text-sm">
-                    Your tokens have been challenged to battle. Accept or ignore
-                    to let them expire.
-                  </p>
-                </div>
-              </div>
-
-              {/* Accept Success/Error Messages */}
-              {isAcceptConfirmed && (
-                <div className="bg-green-500/10 border border-green-500 text-green-400 p-3 rounded-lg mb-4 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="text-sm">Battle accepted successfully!</span>
-                </div>
-              )}
-              {acceptError && (
-                <div className="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded-lg mb-4 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">
-                    Error: {acceptError.message || "Failed to accept battle"}
-                  </span>
-                </div>
-              )}
-
-              {/* Pending Challenges List */}
-              <div className="space-y-3">
-                {pendingChallenges.map((battle) => (
-                  <div
-                    key={Number(battle.battleId)}
-                    className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 hover:border-yellow-500/50 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4 mb-2">
-                          <div className="flex flex-col items-center">
-                            {(() => {
-                              const challengerDetails = getTokenDetails(
-                                battle.memeA
-                              );
-
-                              return (
-                                <div>
-                                  {challengerDetails.image ? (
-                                    <div className="w-12 h-12 rounded-lg overflow-hidden mb-1">
-                                      <img
-                                        src={challengerDetails.image}
-                                        alt={challengerDetails.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          (
-                                            e.target as HTMLImageElement
-                                          ).style.display = "none";
-                                        }}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="w-12 h-12 rounded-lg bg-neutral-700 flex items-center justify-center mb-1 text-xs">
-                                      {challengerDetails.name.substring(0, 3)}
-                                    </div>
-                                  )}
-                                  <p className="text-xs text-neutral-500">
-                                    Challenger
-                                  </p>
-                                  <p className="text-white font-semibold text-sm max-w-[80px] truncate">
-                                    {challengerDetails.name}
-                                  </p>
-                                  <p className="text-white font-mono text-xs">
-                                    {battle.memeA &&
-                                    typeof battle.memeA === "string" &&
-                                    battle.memeA.length >= 10
-                                      ? `${battle.memeA.slice(
-                                          0,
-                                          6
-                                        )}...${battle.memeA.slice(-4)}`
-                                      : battle.memeA || "N/A"}
-                                  </p>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                          <span className="text-red-500 font-bold text-lg">
-                            VS
-                          </span>
-                          <div className="flex flex-col items-center">
-                            {(() => {
-                              const yourTokenDetails = getTokenDetails(
-                                battle.memeB
-                              );
-                              return (
-                                <div>
-                                  {yourTokenDetails.image ? (
-                                    <div className="w-12 h-12 rounded-lg overflow-hidden mb-1">
-                                      <img
-                                        src={yourTokenDetails.image}
-                                        alt={yourTokenDetails.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          (
-                                            e.target as HTMLImageElement
-                                          ).style.display = "none";
-                                        }}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="w-12 h-12 rounded-lg bg-neutral-700 flex items-center justify-center mb-1 text-xs">
-                                      {yourTokenDetails.name.substring(0, 3)}
-                                    </div>
-                                  )}
-                                  <p className="text-xs text-neutral-500">
-                                    Challenged
-                                  </p>
-                                  <p className="text-white font-semibold text-sm max-w-[80px] truncate">
-                                    {yourTokenDetails.name}
-                                  </p>
-                                  <p className="text-white font-mono text-xs">
-                                    {battle.memeB &&
-                                    typeof battle.memeB === "string" &&
-                                    battle.memeB.length >= 10
-                                      ? `${battle.memeB.slice(
-                                          0,
-                                          6
-                                        )}...${battle.memeB.slice(-4)}`
-                                      : battle.memeB || "N/A"}
-                                  </p>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-neutral-400">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            Battle #{Number(battle.battleId)}
-                          </span>
-                          <span className="px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded border border-yellow-500/30">
-                            Pending
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleAcceptBattle(battle.battleId)}
-                          disabled={
-                            (acceptingBattleId === battle.battleId ||
-                              rejectingBattleId === battle.battleId) &&
-                            (isAcceptPending || isAcceptConfirming)
-                          }
-                          className="cursor-pointer bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 hover:border-green-500/60 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 text-green-400 px-4 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
-                        >
-                          {acceptingBattleId === battle.battleId &&
-                          (isAcceptPending || isAcceptConfirming) ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              {isAcceptPending ? "Confirm..." : "Accepting..."}
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="w-4 h-4" />
-                              Accept
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleRejectBattle(battle.battleId)}
-                          disabled={
-                            (acceptingBattleId === battle.battleId ||
-                              rejectingBattleId === battle.battleId) &&
-                            (isAcceptPending || isAcceptConfirming)
-                          }
-                          className="cursor-pointer bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 hover:border-red-500/60 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 text-red-400 px-4 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
-                        >
-                          {rejectingBattleId === battle.battleId &&
-                          (isAcceptPending || isAcceptConfirming) ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              {isAcceptPending ? "Confirm..." : "Rejecting..."}
-                            </>
-                          ) : (
-                            <>
-                              <X className="w-4 h-4" />
-                              Reject
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
@@ -1375,6 +1176,60 @@ export default function Battles() {
                       {/* Battle Footer */}
                       <div className="flex items-center justify-end pt-4 border-t border-neutral-800 gap-2">
                         <div className="flex gap-2">
+                          {/* Accept/Reject buttons for pending challenges where user owns the challenged token */}
+                          {battle.status === 1 &&
+                            address &&
+                            userTokenAddresses.includes(battle.memeB.toLowerCase()) &&
+                            !acceptedBattleIds.has(battle.battleId) &&
+                            !rejectedBattleIds.has(battle.battleId) && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleAcceptBattle(battle.battleId)}
+                                  disabled={
+                                    (acceptingBattleId === battle.battleId ||
+                                      rejectingBattleId === battle.battleId) &&
+                                    (isAcceptPending || isAcceptConfirming)
+                                  }
+                                  className="cursor-pointer bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 hover:border-green-500/60 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 text-green-400 px-3 py-2 rounded-lg transition-colors font-semibold flex items-center gap-1 text-sm"
+                                >
+                                  {acceptingBattleId === battle.battleId &&
+                                  (isAcceptPending || isAcceptConfirming) ? (
+                                    <>
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                      {isAcceptPending ? "..." : "Accepting"}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="w-3 h-3" />
+                                      Accept
+                                    </>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleRejectBattle(battle.battleId)}
+                                  disabled={
+                                    (acceptingBattleId === battle.battleId ||
+                                      rejectingBattleId === battle.battleId) &&
+                                    (isAcceptPending || isAcceptConfirming)
+                                  }
+                                  className="cursor-pointer bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 hover:border-red-500/60 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 text-red-400 px-3 py-2 rounded-lg transition-colors font-semibold flex items-center gap-1 text-sm"
+                                >
+                                  {rejectingBattleId === battle.battleId &&
+                                  (isAcceptPending || isAcceptConfirming) ? (
+                                    <>
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                      {isAcceptPending ? "..." : "Rejecting"}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <X className="w-3 h-3" />
+                                      Reject
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            )}
+
                           {/* Allocate NFTs button for active battles only (and time not expired) */}
                           {battle.status === 2 &&
                             address &&
@@ -1836,14 +1691,20 @@ export default function Battles() {
                         ? `You have already allocated ${alreadyAllocatedToThisBattle} warrior${alreadyAllocatedToThisBattle > 1 ? 's' : ''} to this battle.`
                         : "You don't have any available Warrior NFTs for this token."}
                     </p>
-                    {alreadyAllocatedToThisBattle === 0 && (
-                      <Link
-                        to="/app/mint"
-                        className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors"
-                      >
-                        Mint Warriors
-                      </Link>
-                    )}
+                    {alreadyAllocatedToThisBattle === 0 && (() => {
+                      const tokenDetails = supportedTokenAddress ? getTokenDetails(supportedTokenAddress) : null;
+                      const mintRoute = tokenDetails?.id 
+                        ? `/explore/meme/${tokenDetails.id}/mint`
+                        : "/explore"; // Fallback if id not available
+                      return (
+                        <Link
+                          to={mintRoute}
+                          className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors"
+                        >
+                          Mint Warriors
+                        </Link>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <>
