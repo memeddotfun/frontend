@@ -1,11 +1,11 @@
 import meme from "@/assets/images/meme.png";
 import { Link } from "react-router";
-import { Barcode, ChevronRight, Flame, TrendingUp } from "lucide-react";
+import { Rocket, ChevronRight, TrendingUp } from "lucide-react";
 
 // Props interface for real data
 interface IntroProps {
   totalTokens?: number;
-  totalHeat?: number;
+  activeLaunches?: number;
 }
 
 /**
@@ -13,12 +13,12 @@ interface IntroProps {
  *
  * Displays the hero section of the Explorer page with:
  * - Call to action to create new tokens
- * - Real-time stats (total tokens launched and total heat score)
+ * - Real-time stats (total tokens launched and active launches)
  *
- * @param totalTokens - Total number of tokens launched on the platform
- * @param totalHeat - Cumulative heat score across all tokens
+ * @param totalTokens - Total number of tokens launched on the platform (all time)
+ * @param activeLaunches - Number of currently active/unclaimed token launches
  */
-export function Intro({ totalTokens = 0, totalHeat = 0 }: IntroProps) {
+export function Intro({ totalTokens = 0, activeLaunches = 0 }: IntroProps) {
   // Format large numbers for display
   const formatNumber = (num: number): string => {
     if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`;
@@ -72,10 +72,10 @@ export function Intro({ totalTokens = 0, totalHeat = 0 }: IntroProps) {
               </div>
             </div>
             <div className="space-y-2 bg-dark-900 rounded-md p-3">
-              <p className="text-gray-400 text-xs">Total Heat Score</p>
+              <p className="text-gray-400 text-xs">Active Launches</p>
               <div className="flex items-center gap-2 justify-between">
-                <p className="text-sm font-semibold">{formatNumber(totalHeat)}</p>
-                <Flame className="text-orange-500 w-4 h-4" />
+                <p className="text-sm font-semibold">{formatNumber(activeLaunches)}</p>
+                <Rocket className="text-yellow-500 w-4 h-4" />
               </div>
             </div>
           </div>

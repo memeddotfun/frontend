@@ -273,29 +273,14 @@ export default function Explore() {
   }, [leaderboardData, activeTab]);
 
   // Calculate platform statistics
-  // Temporarily disabled heat calculation - backend doesn't return heat data yet
-  /*
+  // Use pagination.totalCount for accurate platform-wide total
+  // Use unclaimedCount for number of active/unclaimed launches
   const platformStats = useMemo(() => {
-    if (!loadedTokens || loadedTokens.length === 0) {
-      return { totalTokens: 0, totalHeat: 0 };
-    }
-
-    const totalHeat = loadedTokens.reduce((sum, token) => {
-      const heat =
-        typeof token.heat === "bigint" ? Number(token.heat) : token.heat || 0;
-      return sum + heat;
-    }, 0);
-
     return {
-      totalTokens: loadedTokens.length,
-      totalHeat,
+      totalTokens: pagination?.totalCount || 0, // Total tokens across all pages (platform-wide)
+      activeLaunches: unclaimedCount || 0, // Number of active/unclaimed launches
     };
-  }, [loadedTokens]);
-  */
-  const platformStats = {
-    totalTokens: loadedTokens?.length || 0,
-    totalHeat: 0, // Backend doesn't provide heat data yet
-  };
+  }, [pagination?.totalCount, unclaimedCount]);
 
   // Pagination handlers
   const handleNextPage = () => {
@@ -327,7 +312,7 @@ export default function Explore() {
       <div className="px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 lg:space-y-8 w-full">
         <Intro
           totalTokens={platformStats.totalTokens}
-          totalHeat={platformStats.totalHeat}
+          activeLaunches={platformStats.activeLaunches}
         />
 
         {/* Tabs for switching between claimed and unclaimed tokens */}
