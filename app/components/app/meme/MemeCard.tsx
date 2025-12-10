@@ -3,6 +3,7 @@ import { FlameIcon, Share2Icon, Copy, Check, User } from "lucide-react";
 import type { Token } from "@/hooks/api/useAuth"; // Re-added Token import
 import meme from "@/assets/images/meme.png"; // Fallback placeholder image
 import { useTokenHeat } from "@/hooks/contracts/useMemedFactory"; // Import contract heat hook
+import { useShare } from "@/hooks/useShare"; // Import share hook for token sharing
 
 interface MemeIntroCardProps {
   token: Token; // Reverted to Token type
@@ -16,6 +17,9 @@ const MemeIntroCard = ({ token }: MemeIntroCardProps) => {
   const { data: contractHeat, isLoading: isLoadingHeat } = useTokenHeat(
     token.address as `0x${string}`
   );
+
+  // Share hook for token sharing functionality
+  const { share, isSharing } = useShare();
 
   // Safely extract image URL with multiple fallback options to prevent undefined access errors
   // Priority: 1) token.image.s3Key, 2) token.metadata?.imageKey, 3) placeholder image
@@ -36,6 +40,17 @@ const MemeIntroCard = ({ token }: MemeIntroCardProps) => {
     } catch (err) {
       console.error("Failed to copy address:", err);
     }
+  };
+
+  // Handle token sharing - Opens native share sheet on mobile or copies to clipboard on desktop
+  const handleShare = () => {
+    share({
+      tokenName: tokenName,
+      ticker: token.metadata?.ticker || "UNKNOWN",
+      fairLaunchId: token.fairLaunchId?.toString(),
+      tokenId: token.id?.toString(),
+      imageUrl: imageUrl,
+    });
   };
 
   return (
@@ -137,9 +152,13 @@ const MemeIntroCard = ({ token }: MemeIntroCardProps) => {
               </span>
             </div>
 
-            <button className="bg-green-500 hover:bg-green-600 text-black font-medium px-4 py-1.5 cursor-pointer rounded-md flex items-center gap-2 transition">
+            <button
+              onClick={handleShare}
+              disabled={isSharing}
+              className="bg-green-500 hover:bg-green-600 text-black font-medium px-4 py-1.5 cursor-pointer rounded-md flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Share2Icon size={13} />
-              Share
+              {isSharing ? 'Sharing...' : 'Share'}
             </button>
           </div>
         </div>

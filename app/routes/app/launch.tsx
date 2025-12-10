@@ -13,6 +13,7 @@ import { useCreateNonce } from "@/hooks/api/useAuth";
 import { useIsMintable } from "@/hooks/contracts/useMemedTokenSale";
 import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
 import { useAuthStore } from "@/store/auth";
+import { useShare } from "@/hooks/useShare"; // Import share hook for token sharing
 
 export default function LaunchPage() {
   const { address } = useAccount();
@@ -23,6 +24,9 @@ export default function LaunchPage() {
   // Check if user is allowed to mint/launch tokens
   const { data: isMintable, isLoading: isMintableLoading } =
     useIsMintable(address);
+
+  // Share hook for token sharing functionality
+  const { share, isSharing } = useShare();
 
   // State for the multi-step form
   const [step, setStep] = useState(1);
@@ -54,6 +58,16 @@ export default function LaunchPage() {
       setStep(step - 1);
       window.scrollTo(0, 0);
     }
+  };
+
+  // Handle token sharing - Opens native share sheet on mobile or copies to clipboard on desktop
+  const handleShare = () => {
+    share({
+      tokenName: memeTitle,
+      ticker: memeSymbol,
+      fairLaunchId: createdToken?.fairLaunchId?.toString(),
+      imageUrl: memeImage || undefined,
+    });
   };
 
   const handleMint = async () => {
@@ -194,11 +208,14 @@ export default function LaunchPage() {
                   ${memeSymbol} • 1,000,000,000 supply
                 </p>
                 <div className="flex justify-center  gap-4">
-                  <Link to={`/explore`}>
-                    <button className="px-4  gap-2 bg-green-700   border-green-700 text-black  items-center flex  rounded-md h-10  hover:shadow-2xl cursor-pointer">
-                      <Share2Icon size={12} /> Share
-                    </button>
-                  </Link>{" "}
+                  <button
+                    onClick={handleShare}
+                    disabled={isSharing}
+                    className="px-4 gap-2 bg-green-700 border-green-700 text-black items-center flex rounded-md h-10 hover:shadow-2xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Share2Icon size={12} />
+                    {isSharing ? 'Sharing...' : 'Share'}
+                  </button>{" "}
                   <Link to={`/explore`}>
                     <button className="px-4  gap-2 border-2 border-neutral-800 rounded-md h-10 text-white  hover:shadow-2xl cursor-pointer">
                       View on Explorer
