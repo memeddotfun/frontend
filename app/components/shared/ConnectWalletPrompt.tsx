@@ -39,9 +39,7 @@ export function ConnectWalletPrompt({
 
   // Button variant - replaces action buttons (claim, vote, etc.)
   if (variant === "button") {
-    return (
-      <ClientConnectButton className={className} />
-    );
+    return <ClientConnectButton />;
   }
 
   // Card variant - full-width card with icon and description
@@ -74,5 +72,5 @@ export function ConnectWalletPrompt({
   }
 
   // Default fallback to button
-  return <ClientConnectButton className={className} />;
+  return <ClientConnectButton />;
 }

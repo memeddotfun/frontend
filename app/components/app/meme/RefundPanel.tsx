@@ -109,7 +109,8 @@ const RefundPanel = ({ tokenId, tokenName = "Token" }: RefundPanelProps) => {
   const isTransacting = isRefunding || isConfirmingRefund;
 
   // Get USD value for refund amount
-  const refundUsdValue = userCommitment ? useWeiToUsd(userCommitment.amount) : null;
+  // Always call the hook (Rules of Hooks), pass undefined when no commitment
+  const refundUsdValue = useWeiToUsd(userCommitment?.amount);
 
   return (
     <div className="bg-neutral-900 p-6 rounded-xl w-full space-y-4">

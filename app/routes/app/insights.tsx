@@ -45,7 +45,7 @@ interface Battle {
 // Token interface with metadata for stats display
 interface TokenWithMetadata {
   id: string;
-  address?: `0x${string}`;
+  address?: `0x${string}` | string;
   metadata?: {
     name?: string;
     ticker?: string;
@@ -54,6 +54,8 @@ interface TokenWithMetadata {
   image?: {
     s3Key?: string;
   };
+  phase?: string;
+  userId?: string;
 }
 
 // Engagement reward tuple type from contract
@@ -474,7 +476,7 @@ export default function MyInsights() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {userTokens.map((token) => (
-                    <TokenStatsCard key={token.id} token={token} />
+                    <TokenStatsCard key={token.id} token={token as TokenWithMetadata} />
                   ))}
                 </div>
               )}

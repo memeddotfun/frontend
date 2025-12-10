@@ -1,6 +1,8 @@
 import { useMemo } from "react";
-import { useGetTokenData } from "./useMemedFactory";
-import { useFairLaunchData, useIsRefundable } from "./useMemedTokenSale";
+import { useReadContracts } from "wagmi";
+import { FACTORY_ADDRESS, TOKEN_SALE_ADDRESS } from "@/config/contracts";
+import { factoryAbi, memedTokenSaleAbi } from "@/abi";
+import { baseSepolia } from "wagmi/chains";
 
 /**
  * Combined contract data for a single token
@@ -37,61 +39,10 @@ export interface TokensBatchDataReturn {
 }
 
 /**
- * Hook to fetch contract data for a single token
- * This is used internally by useTokensBatchData
- */
-function useSingleTokenData(fairLaunchId: string): TokenContractData {
-  const contractTokenId = fairLaunchId ? BigInt(fairLaunchId) : 0n;
-
-  // Fetch all contract data
-  const {
-    data: tokenData,
-    isLoading: isLoadingToken,
-    error: tokenError
-  } = useGetTokenData(contractTokenId);
-
-  const {
-    data: fairLaunchData,
-    isLoading: isLoadingFairLaunch
-  } = useFairLaunchData(contractTokenId);
-
-  const {
-    data: isRefundable,
-    isLoading: isLoadingRefundable
-  } = useIsRefundable(contractTokenId);
-
-  // Calculate derived fields
-  const isLoading = isLoadingToken || isLoadingFairLaunch || isLoadingRefundable;
-
-  // Check if token is unclaimed
-  // tokenData structure: [token, warriorNFT, creator, isClaimedByCreator, ...]
-  // isClaimedByCreator is at index 3
-  const isUnclaimed = tokenData && !tokenError
-    ? !(tokenData as any)[3]
-    : false;
-
-  // Determine status and if failed
-  const status = fairLaunchData ? (fairLaunchData as any)[0] : 0;
-  const isFailed = isRefundable === true || status === 3;
-
-  return {
-    tokenData,
-    fairLaunchData,
-    isRefundable,
-    isUnclaimed,
-    isFailed,
-    status,
-    isLoading,
-    error: tokenError,
-  };
-}
-
-/**
  * Centralized hook to batch-fetch contract data for multiple tokens
  *
- * This eliminates the performance problem of each token card making 3 separate
- * contract calls. Instead, we fetch all data once at the page level and pass
- * it down as props.
+ * This uses wagmi's useReadContracts (multicall) to batch all contract reads
+ * into a single hook call, avoiding Rules of Hooks violations.
  *
  * @param fairLaunchIds - Array of fairLaunchId strings to fetch data for
  * @returns Object with dataMap (fairLaunchId -> TokenContractData) and loading states
@@ -124,39 +75,93 @@ export function useTokensBatchData(
     );
   }, [safeIds.join(',')]);
 
-  // WORKAROUND for hook order violations:
-  // We'll use a stable maximum number of hooks by always calling hooks for a fixed array
-  // This prevents React from seeing different hook counts between renders
-  // NOTE: This is not ideal and should be refactored to use React Query's useQueries
-
-  // Create a stable array with max expected tokens (e.g., 20 for pagination)
-  // Fill with empty strings for unused slots
-  const MAX_TOKENS = 20;
-  const paddedIds = useMemo(() => {
-    const padded = [...validIds];
-    while (padded.length < MAX_TOKENS) {
-      padded.push(''); // Empty string for unused slots
-    }
-    return padded.slice(0, MAX_TOKENS); // Ensure max length
+  // Build contracts array for multicall
+  // For each token, we need 3 calls: tokenData, fairLaunchData, isRefundable
+  const contracts = useMemo(() => {
+    return validIds.flatMap(id => {
+      const tokenId = BigInt(id);
+      return [
+        {
+          address: FACTORY_ADDRESS,
+          abi: factoryAbi,
+          functionName: 'tokenData',
+          args: [tokenId],
+        },
+        {
+          address: TOKEN_SALE_ADDRESS,
+          abi: memedTokenSaleAbi,
+          functionName: 'fairLaunchData',
+          args: [tokenId],
+          chainId: baseSepolia.id,
+        },
+        {
+          address: TOKEN_SALE_ADDRESS,
+          abi: memedTokenSaleAbi,
+          functionName: 'isRefundable',
+          args: [tokenId],
+        },
+      ] as const;
+    });
   }, [validIds.join(',')]);
 
-  // Now we always call exactly MAX_TOKENS hooks, fixing the hook order
-  const results = paddedIds.map(id => ({
-    id,
-    data: useSingleTokenData(id || '0') // Use '0' for empty slots (will return default data)
-  }));
-
-  // Build the data map - only include valid IDs (exclude padding)
-  const dataMap: Record<string, TokenContractData> = {};
-  results.forEach(({ id, data }) => {
-    if (id && id !== '0') { // Skip empty padding slots
-      dataMap[id] = data;
-    }
+  // Single multicall hook - no Rules of Hooks violation!
+  const { data: results, isLoading } = useReadContracts({
+    contracts,
+    query: {
+      enabled: validIds.length > 0,
+      refetchInterval: 10000, // Refetch every 10 seconds
+    },
   });
 
-  // Calculate aggregate loading states
-  const isLoading = results.some(r => r.data.isLoading);
-  const isComplete = results.every(r => !r.data.isLoading);
+  // Parse multicall results into dataMap
+  const dataMap = useMemo(() => {
+    const map: Record<string, TokenContractData> = {};
+
+    if (!results) return map;
+
+    // Results are in groups of 3 per token (tokenData, fairLaunchData, isRefundable)
+    validIds.forEach((id, index) => {
+      const baseIndex = index * 3;
+      
+      const tokenDataResult = results[baseIndex];
+      const fairLaunchDataResult = results[baseIndex + 1];
+      const isRefundableResult = results[baseIndex + 2];
+
+      // Extract data from results
+      const tokenData = tokenDataResult?.status === 'success' ? tokenDataResult.result : null;
+      const fairLaunchData = fairLaunchDataResult?.status === 'success' ? fairLaunchDataResult.result : null;
+      const isRefundable = isRefundableResult?.status === 'success' ? isRefundableResult.result as boolean : undefined;
+
+      // Calculate derived fields
+      // tokenData structure: [token, warriorNFT, creator, isClaimedByCreator, ...]
+      // isClaimedByCreator is at index 3
+      const isUnclaimed = tokenData ? !(tokenData as any)[3] : false;
+
+      // Determine status and if failed
+      const status = fairLaunchData ? (fairLaunchData as any)[0] : 0;
+      const isFailed = isRefundable === true || status === 3;
+
+      // Check for errors
+      const hasError = tokenDataResult?.status === 'failure';
+      const error = hasError && tokenDataResult?.error ? tokenDataResult.error as Error : null;
+
+      map[id] = {
+        tokenData,
+        fairLaunchData,
+        isRefundable,
+        isUnclaimed,
+        isFailed,
+        status,
+        isLoading: false, // Individual items are not loading once we have results
+        error,
+      };
+    });
+
+    return map;
+  }, [results, validIds.join(',')]);
+
+  // Calculate aggregate states
+  const isComplete = !isLoading && results !== undefined;
 
   return {
     dataMap,

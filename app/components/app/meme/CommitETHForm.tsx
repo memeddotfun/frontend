@@ -269,12 +269,14 @@ const CommitETHForm = ({ tokenId, tokenName, tokenSymbol: memeTokenSymbol, onCom
     flowState === "completed";
 
   // Convert Wei amounts to USD for display
+  // Always call hooks unconditionally (Rules of Hooks) - they handle undefined gracefully
   const inputUsdValue = useWeiToUsd(ethAmountInWei);
-  const balanceUsdValue = ethBalance ? useWeiToUsd(ethBalance.value) : null;
-  const commitmentUsdValue = userCommitment ? useWeiToUsd(userCommitment.amount) : null;
+  const balanceUsdValue = useWeiToUsd(ethBalance?.value);
+  const commitmentUsdValue = useWeiToUsd(userCommitment?.amount);
   const refundUsdValue = useWeiToUsd(refundAmount);
-  const pricePerTokenUsd = pricePerTokenWei ? useWeiToUsd(pricePerTokenWei) : null;
-  const expectedRefundUsd = expectedClaim && expectedClaim[1] > 0n ? useWeiToUsd(expectedClaim[1]) : null;
+  const pricePerTokenUsd = useWeiToUsd(pricePerTokenWei);
+  const expectedRefundUsd = useWeiToUsd(expectedClaim?.[1]);
+
 
   return (
     <div className="bg-neutral-900 p-6 rounded-xl w-full space-y-4">

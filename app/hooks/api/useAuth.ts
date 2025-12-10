@@ -64,6 +64,8 @@ export interface User {
   id: string;
   address: string;
   role: string;
+  name?: string; // Display name (optional)
+  username?: string; // Username (optional)
   socials: Social[];
   token: Token[];
   lastLogin: string;

@@ -68,7 +68,7 @@ export default function CreateUnclaimedToken() {
         address,
       });
 
-      const nonce = nonceResponse.data.nonce;
+      const nonce = (nonceResponse.data as { nonce: string }).nonce;
 
       // Step 2: Sign the nonce
       const signature = await signMessageAsync({ message: nonce });
@@ -100,7 +100,7 @@ export default function CreateUnclaimedToken() {
 
       // Success
       toast.success(
-        `Unclaimed token created successfully! Fair Launch ID: ${response.data.fairLaunchId}`
+        `Unclaimed token created successfully! Fair Launch ID: ${(response.data as { fairLaunchId: string }).fairLaunchId}`
       );
 
       // Reset form

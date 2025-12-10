@@ -181,7 +181,7 @@ export function ClientConnectButton() {
   useEffect(() => {
     if (authData?.message && signInStatus === "connecting") {
       console.log("Backend connection successful. Verifying session...");
-      useAuthStore.getState().verifySession(disconnect);
+      useAuthStore.getState().verifySession();
       setSignInStatus("idle"); // Reset after successful authentication
     }
   }, [authData, signInStatus, disconnect]);

@@ -37,7 +37,7 @@ interface ApiToken {
 export function TrendingMemes() {
   // Fetch only claimed tokens for trending display
   // Backend now supports filtering by claimed status
-  const { data: tokensResponse, isLoading, error } = useMemeTokens({
+  const { data: tokensResponse, loading: isLoading, error } = useMemeTokens({
     immediate: true,  // Always fetch (endpoint is public)
     claimed: true,    // Only fetch claimed tokens for trending
     limit: 10,        // Fetch top 10 to sort by heat client-side
@@ -52,7 +52,7 @@ export function TrendingMemes() {
     if (!tokensData || !Array.isArray(tokensData)) return [];
 
     // Sort by heat (descending), then market cap (descending)
-    return (tokensData as ApiToken[])
+    return (tokensData as unknown as ApiToken[])
       .sort((a, b) => {
         // Primary: Heat score (higher is better)
         const heatDiff = (b.heat || 0) - (a.heat || 0);

@@ -29,7 +29,7 @@ const formatCurrency = (value: string): string => {
 
 export function StatsSection() {
   // Fetch real platform statistics
-  const { data: platformStats, isLoading, error } = usePlatformStats();
+  const { data: platformStats, loading: isLoading, error } = usePlatformStats();
 
   // Show loading state
   if (isLoading) {
