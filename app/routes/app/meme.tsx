@@ -25,6 +25,20 @@ import { ConnectWalletPrompt } from "@/components/shared/ConnectWalletPrompt";
 import { useAuthStore } from "@/store/auth";
 import { useAccount } from "wagmi";
 
+/**
+ * Format description text for display:
+ * - Capitalize first letter
+ * - Trim whitespace
+ * - Handle empty strings
+ */
+function formatDescription(text: string | undefined): string {
+  if (!text || text.trim().length === 0) {
+    return "No description available";
+  }
+  const trimmed = text.trim();
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
 // Export the loader for this route
 export { memeTokenDetailLoader as loader };
 
@@ -274,8 +288,7 @@ export default function Meme() {
                       Description
                     </h3>
                     <p className="text-neutral-300">
-                      {token.metadata?.description ||
-                        "No description available"}
+                      {formatDescription(token.metadata?.description)}
                     </p>
                   </div>
 

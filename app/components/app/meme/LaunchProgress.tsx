@@ -243,26 +243,18 @@ const LaunchProgress = ({ tokenId }: LaunchProgressProps) => {
         </div>
       )}
 
-      {/* Stats Grid - Display formatted token amounts for better readability */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-neutral-800 rounded-lg p-4 text-center">
-          <div className="text-green-400 text-2xl font-semibold">
-            {totalSold > 0n ? formatTokenAmount(formatEther(totalSold)) : "0"}
-          </div>
-          <div className="text-sm text-neutral-400">Tokens Sold</div>
+      {/* Total Raised - Full width display */}
+      <div className="bg-neutral-800 rounded-lg p-4 text-center">
+        <div className="text-white text-2xl font-semibold">
+          {totalCommitted > 0n
+            ? `${formatTokenAmount(formatEther(totalCommitted))} ETH`
+            : "0 ETH"
+          }
         </div>
-        <div className="bg-neutral-800 rounded-lg p-4 text-center">
-          <div className="text-white text-2xl font-semibold">
-            {totalCommitted > 0n
-              ? `${formatTokenAmount(formatEther(totalCommitted))} ETH`
-              : "0 ETH"
-            }
-          </div>
-          {totalCommittedUsd && (
-            <div className="text-green-400 text-sm font-medium">{totalCommittedUsd}</div>
-          )}
-          <div className="text-sm text-neutral-400">Total Committed</div>
-        </div>
+        {totalCommittedUsd && (
+          <div className="text-green-400 text-sm font-medium">{totalCommittedUsd}</div>
+        )}
+        <div className="text-sm text-neutral-400">Total Raised</div>
       </div>
 
       {/* Launch Status */}

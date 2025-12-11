@@ -240,11 +240,16 @@ const CommitETHForm = ({ tokenId, tokenName, tokenSymbol: memeTokenSymbol, onCom
   );
 
   // Check if user has enough ETH balance - memoized for performance
+  // Only returns false when balance is loaded AND insufficient (not during loading)
   const hasEnoughBalance = useMemo(
-    () =>
-      ethBalance && requiredAmount > 0n
-        ? ethBalance.value >= requiredAmount
-        : false,
+    () => {
+      // If balance is not yet loaded, assume enough (don't show warning)
+      if (!ethBalance) return true;
+      // If no amount entered, consider it valid
+      if (requiredAmount <= 0n) return true;
+      // Check actual balance
+      return ethBalance.value >= requiredAmount;
+    },
     [ethBalance, requiredAmount]
   );
 
@@ -514,7 +519,7 @@ const CommitETHForm = ({ tokenId, tokenName, tokenSymbol: memeTokenSymbol, onCom
         <div className="text-xs text-neutral-400 text-center">
           Price per {memeTokenSymbol || "MEME"} token:{" "}
           {pricePerTokenUsd ? (
-            <span className="text-green-400 font-semibold">${pricePerTokenUsd} USD</span>
+            <span className="text-green-400 font-semibold">{pricePerTokenUsd} USD</span>
           ) : (
             <span className="text-white">{formatSmallEthPrice(formatEther(pricePerTokenWei))} ETH</span>
           )}
