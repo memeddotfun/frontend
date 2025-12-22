@@ -6,11 +6,11 @@
 // TODO: Add addresses for other networks as needed.
 
 export const CONTRACT_ADDRESSES = {
-  factory: "0x7B42121256e2B6b22A1951bf3878272e2D6e5e48",
-  memedBattle: "0x5165391F2a4fB1765A9393B53019339b948A3112",
-  memedBattleResolver: "0x84029bE463c6bCFf47b61486704f73a29f7984c5",
-  memedEngageToEarn: "0xA89609233f67D2fDB98C6569Ea1B81DDD59B7A31",
-  memedTokenSale: "0xA05B10bd64d47C8d183B2ca8D1Dedd42Cc987380",
+  factory: "0x9DD3d513697A7EE2b7932a0B9f19743e3949eC0e",
+  memedBattle: "0xa69F367908C41800B7D3c6439fF79d4DCD1B5e40",
+  memedBattleResolver: "0x732a296851173Ba285a6AcA4540b776bC0ca67C2",
+  memedEngageToEarn: "0x176ccd46615E0e0b2f13c61E200299411ae011b5",
+  memedTokenSale: "0xc8B2D3d9c1C500aa9c21bEc472Beb6AC8d421369",
 
 
   // Chainlink ETH/USD Price Feeds (8 decimals)

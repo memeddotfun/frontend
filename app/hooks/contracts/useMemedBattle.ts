@@ -152,7 +152,6 @@ export function useAllocateNftsToBattle() {
 
   type AllocateArgs = {
     battleId: bigint;
-    user: `0x${string}`;
     supportedMeme: `0x${string}`;
     nftsIds: bigint[];
   };
@@ -162,7 +161,7 @@ export function useAllocateNftsToBattle() {
       address: BATTLE_ADDRESS,
       abi: memedBattleAbi,
       functionName: "allocateNFTsToBattle",
-      args: [args.battleId, args.user, args.supportedMeme, args.nftsIds],
+      args: [args.battleId, args.supportedMeme, args.nftsIds],
     });
   };
 
@@ -278,19 +277,18 @@ export function useGetBattleAllocations(
 }
 
 /**
- * Hook to check if a specific NFT is returnable and get its accumulated rewards.
- * Returns tuple of [reward amount, is returnable].
+ * Hook to get an NFT's accumulated battle rewards.
  * @param tokenAddress The address of the meme token
  * @param nftId The ID of the NFT to check
  */
-export function useGetNftRewardAndIsReturnable(
+export function useGetNftReward(
   tokenAddress: `0x${string}` | undefined,
   nftId: bigint | undefined
 ) {
   return useReadContract({
     address: BATTLE_ADDRESS,
     abi: memedBattleAbi,
-    functionName: "getNftRewardAndIsReturnable",
+    functionName: "getNftReward",
     args: tokenAddress && nftId ? [tokenAddress, nftId] : undefined,
     query: {
       enabled: !!tokenAddress && !!nftId,
@@ -381,4 +379,84 @@ export function useGetBattleScoresBatch(battleIds: bigint[]) {
   }
 
   return { scoresMap, isLoading, error, refetch };
+}
+
+/**
+ * Hook to batch check if multiple NFTs are currently in a battle.
+ * Uses multicall for efficiency when checking multiple NFTs.
+ * @param tokenAddress The token address (warrior NFT contract)
+ * @param nftIds Array of NFT IDs to check
+ * @returns Map of nftId -> boolean (true if in battle)
+ */
+export function useIsNftOnBattleBatch(tokenAddress: `0x${string}` | undefined, nftIds: bigint[]) {
+  // Build contract calls for each NFT
+  const contracts = nftIds.map((nftId) => ({
+    address: BATTLE_ADDRESS,
+    abi: memedBattleAbi,
+    functionName: "isNftOnBattle" as const,
+    args: [tokenAddress!, nftId] as const,
+  }));
+
+  const { data, isLoading, error, refetch } = useReadContracts({
+    contracts,
+    query: {
+      enabled: !!tokenAddress && nftIds.length > 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    },
+  });
+
+  // Build a map of nftId -> isInBattle for easy lookup
+  const inBattleMap: Record<string, boolean> = {};
+  
+  if (data) {
+    nftIds.forEach((nftId, index) => {
+      const result = data[index];
+      if (result && result.status === "success") {
+        inBattleMap[nftId.toString()] = result.result as boolean;
+      }
+    });
+  }
+
+  return { inBattleMap, isLoading, error, refetch };
+}
+
+/**
+ * Hook to batch check if multiple NFTs are allocatable to a battle.
+ * Uses multicall for efficiency when checking multiple NFTs.
+ * @param tokenAddress The token address (warrior NFT contract)
+ * @param nftIds Array of NFT IDs to check
+ * @returns Map of nftId -> boolean (true if allocatable)
+ */
+export function useIsAllocatableBatch(tokenAddress: `0x${string}` | undefined, nftIds: bigint[]) {
+  // Build contract calls for each NFT
+  const contracts = nftIds.map((nftId) => ({
+    address: BATTLE_ADDRESS,
+    abi: memedBattleAbi,
+    functionName: "isAllocatable" as const,
+    args: [tokenAddress!, nftId] as const,
+  }));
+
+  const { data, isLoading, error, refetch } = useReadContracts({
+    contracts,
+    query: {
+      enabled: !!tokenAddress && nftIds.length > 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    },
+  });
+
+  // Build a map of nftId -> isAllocatable for easy lookup
+  const allocatableMap: Record<string, boolean> = {};
+  
+  if (data) {
+    nftIds.forEach((nftId, index) => {
+      const result = data[index];
+      if (result && result.status === "success") {
+        allocatableMap[nftId.toString()] = result.result as boolean;
+      }
+    });
+  }
+
+  return { allocatableMap, isLoading, error, refetch };
 }

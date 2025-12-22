@@ -10,6 +10,7 @@ import {
   useCancelCommit,
   useGetExpectedClaim,
   useFairLaunchData,
+  useFairLaunchDuration,
   useRaiseEth,
   useCalculateTokensForCommitment,
 } from "@/hooks/contracts/useMemedTokenSale";
@@ -126,6 +127,7 @@ const CommitETHForm = ({ tokenId, tokenName, tokenSymbol: memeTokenSymbol, onCom
   // Get fair launch data to check for oversubscription
   const { data: fairLaunchData } = useFairLaunchData(tokenId);
   const { data: raiseTarget } = useRaiseEth();
+  const { data: fairLaunchDuration } = useFairLaunchDuration();
   const TARGET_ETH = raiseTarget || 40n * 10n ** 18n;
 
   // Get expected claim to show what user will actually receive
@@ -134,6 +136,31 @@ const CommitETHForm = ({ tokenId, tokenName, tokenSymbol: memeTokenSymbol, onCom
   // Calculate if launch is currently oversubscribed
   const totalCommitted = fairLaunchData ? fairLaunchData[2] : 0n;
   const isOversubscribed = totalCommitted > TARGET_ETH;
+
+  // Check if launch window has ended (can't cancel after launch ends)
+  // Use state and effect to update in real-time
+  const fairLaunchStartTime = fairLaunchData ? fairLaunchData[1] : 0n;
+  const [isLaunchEnded, setIsLaunchEnded] = useState(false);
+  
+  useEffect(() => {
+    if (!fairLaunchStartTime || !fairLaunchDuration || fairLaunchStartTime === 0n) {
+      setIsLaunchEnded(false);
+      return;
+    }
+    
+    const checkLaunchEnded = () => {
+      const now = BigInt(Math.floor(Date.now() / 1000));
+      const endTime = fairLaunchStartTime + fairLaunchDuration;
+      setIsLaunchEnded(now > endTime);
+    };
+    
+    // Check immediately
+    checkLaunchEnded();
+    
+    // Check every second
+    const interval = setInterval(checkLaunchEnded, 1000);
+    return () => clearInterval(interval);
+  }, [fairLaunchStartTime, fairLaunchDuration]);
 
   // Debounce the input amount
   const debouncedEthAmount = useDebounce(ethAmount, 500);
@@ -384,16 +411,19 @@ const CommitETHForm = ({ tokenId, tokenName, tokenSymbol: memeTokenSymbol, onCom
                 </div>
               )}
             </div>
-            <button
-              onClick={handleCancelCommit}
-              disabled={isTransacting || userCommitment.claimed} // Can't cancel if already claimed
-              className="mt-3 w-full bg-red-800 hover:bg-red-900 text-white font-medium py-2 px-2 rounded-md transition disabled:bg-neutral-600 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1"
-            >
-              <TrendingDown size={14} />
-              {isCancelling || isConfirmingCancel
-                ? "Cancelling..."
-                : "Cancel Commitment"}
-            </button>
+            {/* Only show cancel button if launch hasn't ended */}
+            {!isLaunchEnded && (
+              <button
+                onClick={handleCancelCommit}
+                disabled={isTransacting || userCommitment.claimed} // Can't cancel if already claimed
+                className="mt-3 w-full bg-red-800 hover:bg-red-900 text-white font-medium py-2 px-2 rounded-md transition disabled:bg-neutral-600 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1"
+              >
+                <TrendingDown size={14} />
+                {isCancelling || isConfirmingCancel
+                  ? "Cancelling..."
+                  : "Cancel Commitment"}
+              </button>
+            )}
           </div>
         )}
 

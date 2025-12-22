@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { formatEther } from "viem";
+import { toast } from "sonner";
 import {
   Swords,
   Trophy,
@@ -29,6 +30,7 @@ import {
   useGetBattleAllocations,
   useGetBattleScore,
   useGetBattleScoresBatch,
+  useIsNftOnBattleBatch,
 } from "@/hooks/contracts/useMemedBattle";
 import { useAuthStore } from "@/store/auth";
 import { useGetWarriorNFT } from "@/hooks/contracts/useMemedFactory";
@@ -242,6 +244,12 @@ export default function Battles() {
     );
   }, [activeNFTs, allocatedNFTIds]);
 
+  // Batch check which NFTs are currently in any battle
+  const { inBattleMap, isLoading: isLoadingBattleStatus, refetch: refetchBattleStatus } = useIsNftOnBattleBatch(
+    nftAddress as `0x${string}` | undefined,
+    [...(availableNFTsForBattle || [])]
+  );
+
   // Refetch NFTs and allocations immediately when allocation modal opens
   // Wait for allocationBattle and supportedTokenAddress to be set
   useEffect(() => {
@@ -277,8 +285,13 @@ export default function Battles() {
   // This includes heatScoreA and heatScoreB for each battle
   const { scoresMap: battleScoresMap } = useGetBattleScoresBatch(battleIds);
 
-  // Filter battles by status
+  // Filter battles by status and exclude empty/placeholder battles (zero addresses)
+  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
   const filteredBattles = battles.filter((battle) => {
+    // Skip battles with zero addresses (empty/placeholder entries from contract)
+    if (battle.memeA === ZERO_ADDRESS || battle.memeB === ZERO_ADDRESS) {
+      return false;
+    }
     if (statusFilter === "all") return true;
     return battle.status === statusFilter;
   });
@@ -302,6 +315,7 @@ export default function Battles() {
   // Handle successful battle creation
   useEffect(() => {
     if (isChallengeConfirmed) {
+      toast.success("Battle challenge sent!");
       // Refetch battles to show the new battle
       refetchBattles();
       // Reset form
@@ -310,6 +324,25 @@ export default function Battles() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallengeConfirmed]);
+
+  // Handle challenge error
+  useEffect(() => {
+    if (challengeError) {
+      // Extract user-friendly error message
+      const errorMessage = challengeError.message || "Unknown error";
+      
+      // Check for common error patterns
+      if (errorMessage.includes("Unauthorized")) {
+        toast.error("Challenge Failed: Only the token creator can initiate a battle challenge.");
+      } else if (errorMessage.includes("cooldown")) {
+        toast.error("Challenge Failed: This token is still in cooldown from a previous battle.");
+      } else if (errorMessage.includes("rejected")) {
+        toast.error("Challenge cancelled by user.");
+      } else {
+        toast.error(`Challenge Failed: ${errorMessage.slice(0, 100)}`);
+      }
+    }
+  }, [challengeError]);
 
   // Handle successful battle acceptance
   useEffect(() => {
@@ -337,11 +370,25 @@ export default function Battles() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAcceptConfirmed, rejectingBattleId]);
 
-  // Reset accepting/rejecting battle ID on error
+  // Reset accepting/rejecting battle ID on error and show toast
   useEffect(() => {
     if (acceptError) {
       setAcceptingBattleId(null);
       setRejectingBattleId(null);
+      
+      // Extract user-friendly error message
+      const errorMessage = acceptError.message || "Unknown error";
+      
+      // Check for common error patterns
+      if (errorMessage.includes("Challenge not expired")) {
+        toast.error("Cannot accept yet: The challenge period hasn't expired. Wait for the countdown to end.");
+      } else if (errorMessage.includes("Unauthorized")) {
+        toast.error("Accept Failed: Only the challenged token creator can accept this battle.");
+      } else if (errorMessage.includes("rejected")) {
+        toast.error("Transaction cancelled by user.");
+      } else {
+        toast.error(`Battle Action Failed: ${errorMessage.slice(0, 100)}`);
+      }
     }
   }, [acceptError]);
 
@@ -505,7 +552,6 @@ export default function Battles() {
 
     allocateNfts({
       battleId: allocationBattle.battleId,
-      user: address,
       supportedMeme,
       nftsIds: Array.from(selectedNFTs), // Convert Set to array for contract call
     });
@@ -1800,13 +1846,15 @@ export default function Battles() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
                       {availableNFTsForBattle.map((nftId) => {
                         const isAllocated = isNFTAllocated(nftId);
+                        const isInAnyBattle = inBattleMap[nftId.toString()] === true;
+                        const isDisabled = isAllocated || isInAnyBattle;
                         return (
                           <button
                             key={nftId.toString()}
-                            onClick={() => !isAllocated && toggleNFTSelection(nftId)}
-                            disabled={isAllocated}
+                            onClick={() => !isDisabled && toggleNFTSelection(nftId)}
+                            disabled={isDisabled}
                             className={`p-4 rounded-lg border-2 transition-all ${
-                              isAllocated
+                              isDisabled
                                 ? "border-neutral-600 bg-neutral-800/50 opacity-50 cursor-not-allowed"
                                 : selectedNFTs.has(nftId)
                                 ? supportingSide === "memeA"
@@ -1817,12 +1865,18 @@ export default function Battles() {
                           >
                             <div className="text-center">
                               <div className="text-2xl mb-2">
-                                {isAllocated ? "🔒" : "⚔️"}
+                                {isInAnyBattle ? "⚔️🔒" : isAllocated ? "🔒" : "⚔️"}
                               </div>
-                              <p className={`font-semibold text-sm ${isAllocated ? "text-neutral-500" : "text-white"}`}>
+                              <p className={`font-semibold text-sm ${isDisabled ? "text-neutral-500" : "text-white"}`}>
                                 Warrior #{nftId.toString()}
                               </p>
-                              {isAllocated ? (
+                              {isInAnyBattle ? (
+                                <div className="mt-2">
+                                  <p className="text-xs text-red-400">
+                                    In Battle
+                                  </p>
+                                </div>
+                              ) : isAllocated ? (
                                 <div className="mt-2">
                                   <p className="text-xs text-neutral-500">
                                     Already Allocated
@@ -1859,6 +1913,14 @@ export default function Battles() {
                       (40% of battle score).
                     </div>
 
+                    {/* Battle Reward Mechanics Warning */}
+                    <div className="p-3 rounded-lg mb-4 text-sm bg-yellow-500/10 border border-yellow-500/50 text-yellow-300">
+                      <span className="font-semibold">⚠️ Reward Impact:</span> Battle outcomes affect your warrior's future engagement rewards.
+                      <div className="mt-1 text-xs text-yellow-400/80">
+                        • <span className="text-green-400">Win</span>: +100 tokens bonus per battle
+                        • <span className="text-red-400">Lose</span>: -100 tokens penalty per battle
+                      </div>
+                    </div>
                     {/* Allocate Button - Color matches supported token */}
                     <button
                       onClick={handleAllocateNFTs}
