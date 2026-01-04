@@ -40,7 +40,7 @@ The application has two main image loading problems causing layout shifts and sl
 - **Line 19:** Container has `className="bg-neutral-900 text-white p-4 rounded-xl mx-auto"`
 - **Line 22:** Image container is `w-full md:w-1/6 h-full` (width changes at md breakpoint, height is 100%)
 - **Line 23-27:** Image has no explicit dimensions, relies on CSS sizing only
-- **Image URL sources:** Priority: `token.image?.s3Key` → `token.metadata?.imageKey` → fallback `meme` placeholder
+- **Image URL sources:** Priority: `token.image?.s3Key` → `token.metadata?.imageUrl` → fallback `meme` placeholder
 
 ---
 
@@ -74,7 +74,7 @@ The application has two main image loading problems causing layout shifts and sl
 
 ### Technical Details
 - **Line 42-47:** Card image layout with responsive classes
-- **Image URL source:** `token.metadata?.imageKey` with fallback to `meme` placeholder
+- **Image URL source:** `token.metadata?.imageUrl` with fallback to `meme` placeholder
 - **Grid layout:** Grid with 1-4 columns depending on screen size (lines 69 in MemeTokensList.tsx)
 - **No loading states** for individual cards
 
@@ -84,12 +84,12 @@ The application has two main image loading problems causing layout shifts and sl
 
 ### MemeIntroCard (meme.tsx)
 - **Source 1:** `token.image?.s3Key` (S3 stored image)
-- **Source 2:** `token.metadata?.imageKey` (metadata-stored image)
+- **Source 2:** `token.metadata?.imageUrl` (metadata-stored image)
 - **Source 3:** `meme` placeholder (imported at line 3)
 - **Code:** Line 12 in MemeCard.tsx
 
 ### MemeTokenCard (explore.tsx)
-- **Source 1:** `token.metadata?.imageKey` (metadata-stored image)
+- **Source 1:** `token.metadata?.imageUrl` (metadata-stored image)
 - **Source 2:** `meme` placeholder (imported at line 5 in explore.tsx)
 - **Code:** Line 30 in explore.tsx
 

@@ -119,7 +119,7 @@ export function useTokenDetailsMap(
                   token.metadata?.name ||
                   `${token.address.slice(0, 6)}...${token.address.slice(-4)}`,
                 image:
-                  token.image?.s3Key || (token.metadata as any)?.imageKey || "",
+                  token.image?.s3Key || (token.metadata as any)?.imageUrl || "",
                 // Add extended fields if requested
                 ...(includeExtendedFields && {
                   ticker: token.metadata?.ticker || "???",
@@ -171,7 +171,7 @@ export function useTokenDetailsMap(
               const tokenMetadata = tokenData.metadata as {
                 name?: string;
                 ticker?: string;
-                imageKey?: string;
+                imageUrl?: string;
               };
 
               if (enableDebugLogs) {
@@ -182,8 +182,8 @@ export function useTokenDetailsMap(
                 name:
                   tokenMetadata.name ||
                   `${address.slice(0, 6)}...${address.slice(-4)}`,
-                // Backend returns imageKey as full URL in metadata, use it directly
-                image: tokenMetadata.imageKey || tokenData.image?.s3Key || "",
+                // Backend returns imageUrl as full URL in metadata, use it directly
+                image: tokenMetadata.imageUrl || tokenData.image?.s3Key || "",
                 // Add extended fields if requested
                 ...(includeExtendedFields && {
                   ticker: tokenMetadata.ticker || "???",
@@ -245,7 +245,7 @@ export function useTokenDetailsMap(
                   const tokenMetadata = tokenData.metadata as {
                     name?: string;
                     ticker?: string;
-                    imageKey?: string;
+                    imageUrl?: string;
                   };
 
                   if (enableDebugLogs) {
@@ -256,8 +256,8 @@ export function useTokenDetailsMap(
                     name:
                       tokenMetadata.name ||
                       `${address.slice(0, 6)}...${address.slice(-4)}`,
-                    // Backend returns imageKey as full URL in metadata, use it directly
-                    image: tokenMetadata.imageKey || tokenData.image?.s3Key || "",
+                    // Backend returns imageUrl as full URL in metadata, use it directly
+                    image: tokenMetadata.imageUrl || tokenData.image?.s3Key || "",
                     ticker: tokenMetadata.ticker || "???",
                     address: tokenData.address || (address as `0x${string}`),
                     id: tokenData.id, // Include memeId for routing

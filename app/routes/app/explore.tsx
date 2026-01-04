@@ -233,7 +233,7 @@ export default function Explore() {
       active: false,
       badge: token.claimed ? "Claimed" : "Unclaimed",
       badgeColor: token.claimed ? "bg-green-500" : "bg-yellow-500",
-      image: token.metadata?.imageKey || meme,
+      image: token.metadata?.imageUrl || meme,
       fairLaunchId: token.fairLaunchId,
       address: token.address,
       createdAt: token.createdAt,
@@ -263,7 +263,7 @@ export default function Explore() {
         : token.user?.address
         ? `@${token.user.address.slice(0, 6)}...`
         : "@unknown",
-      image: token.metadata?.imageKey || meme,
+      image: token.metadata?.imageUrl || meme,
       score: typeof token.heat === "bigint" ? Number(token.heat) : token.heat || 0,
       engagement:
         typeof token.heat === "bigint"

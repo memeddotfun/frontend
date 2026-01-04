@@ -1557,10 +1557,10 @@ export default function Battles() {
                     return (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTokens.map((token) => {
-                          // Get image using correct priority: token.image.s3Key > metadata.imageKey > fallback
+                          // Get image using correct priority: token.image.s3Key > metadata.imageUrl > fallback
                           const imageUrl =
                             token.image?.s3Key ||
-                            (token.metadata as any)?.imageKey ||
+                            (token.metadata as any)?.imageUrl ||
                             "";
 
                           // Safely format creator address with null checks

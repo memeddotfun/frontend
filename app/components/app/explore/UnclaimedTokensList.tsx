@@ -73,7 +73,7 @@ export function UnclaimedTokensList({ tokens, contractDataMap }: UnclaimedTokens
                     active: false,
                     badge: "Unclaimed",
                     badgeColor: "bg-yellow-500",
-                    image: token.metadata?.imageKey || meme,
+                    image: token.metadata?.imageUrl || meme,
                     fairLaunchId: token.fairLaunchId,
                   };
 

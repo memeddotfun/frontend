@@ -233,9 +233,9 @@ export default function ClaimToken() {
           {/* Left: Token Image */}
           <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
             <div className="aspect-square w-full bg-neutral-800 rounded-lg overflow-hidden mb-4">
-              {token.metadata?.imageKey || token.image?.s3Key ? (
+              {token.metadata?.imageUrl || token.image?.s3Key ? (
                 <img
-                  src={token.metadata?.imageKey || token.image?.s3Key}
+                  src={token.metadata?.imageUrl || token.image?.s3Key}
                   alt={token.metadata?.name || "Token"}
                   className="w-full h-full object-cover"
                 />

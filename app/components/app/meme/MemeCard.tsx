@@ -22,8 +22,8 @@ const MemeIntroCard = ({ token }: MemeIntroCardProps) => {
   const { share, isSharing } = useShare();
 
   // Safely extract image URL with multiple fallback options to prevent undefined access errors
-  // Priority: 1) token.image.s3Key, 2) token.metadata?.imageKey, 3) placeholder image
-  const imageUrl = token.image?.s3Key || token.metadata?.imageKey || meme;
+  // Priority: 1) token.image.s3Key, 2) token.metadata?.imageUrl, 3) placeholder image
+  const imageUrl = token.image?.s3Key || token.metadata?.imageUrl || meme;
 
   // Safely extract token name and description from metadata with fallbacks
   const tokenName = token.metadata?.name || "Unnamed Token";

@@ -430,7 +430,7 @@ export function useTokensLeaderboard(options?: UseApiOptions & {
       metadata: {
         name: string;
         ticker: string;
-        imageKey: string;
+        imageUrl: string;
         description: string;
       };
       user: {

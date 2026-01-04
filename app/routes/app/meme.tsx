@@ -258,9 +258,9 @@ export default function Meme() {
                 {/* Image */}
                 <div className="w-full md:w-1/3">
                   <div className="aspect-square bg-neutral-800 rounded-lg overflow-hidden">
-                    {token.metadata?.imageKey || token.image?.s3Key ? (
+                    {token.metadata?.imageUrl || token.image?.s3Key ? (
                       <img
-                        src={token.metadata?.imageKey || token.image?.s3Key}
+                        src={token.metadata?.imageUrl || token.image?.s3Key}
                         alt={token.metadata?.name || "Token"}
                         className="w-full h-full object-cover"
                       />

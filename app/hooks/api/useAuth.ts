@@ -29,7 +29,7 @@ export interface Metadata {
   name: string;
   ticker: string;
   description: string;
-  imageKey: string;
+  imageUrl: string;
   createdAt: string;
   updatedAt: string;
 }

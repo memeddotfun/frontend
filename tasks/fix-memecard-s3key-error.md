@@ -48,7 +48,7 @@ Successfully fixed the `MemeIntroCard` component error by adding defensive null/
 - Added import for placeholder image: `import meme from "@/assets/images/meme.png"`
 - Created safe image extraction with triple fallback strategy:
   ```typescript
-  const imageUrl = token.image?.s3Key || (token as any).metadata?.imageKey || meme;
+  const imageUrl = token.image?.s3Key || (token as any).metadata?.imageUrl || meme;
   ```
 - Updated img src to use the safely extracted `imageUrl`
 

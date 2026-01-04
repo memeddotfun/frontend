@@ -50,7 +50,7 @@ interface TokenWithMetadata {
   metadata?: {
     name?: string;
     ticker?: string;
-    imageKey?: string;
+    imageUrl?: string;
   };
   image?: {
     s3Key?: string;
@@ -83,9 +83,9 @@ function TokenStatsCard({ token }: { token: TokenWithMetadata }) {
     >
       {/* Token Image */}
       <div className="aspect-square w-full bg-neutral-700 rounded-lg overflow-hidden mb-3">
-        {token.image?.s3Key || token.metadata?.imageKey ? (
+        {token.image?.s3Key || token.metadata?.imageUrl ? (
           <img
-            src={token.image?.s3Key || token.metadata?.imageKey}
+            src={token.image?.s3Key || token.metadata?.imageUrl}
             alt={token.metadata?.name || "Token"}
             className="w-full h-full object-cover"
           />

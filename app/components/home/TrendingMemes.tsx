@@ -22,7 +22,7 @@ interface ApiToken {
   address: string;
   metadata?: {
     name?: string;
-    imageKey?: string;
+    imageUrl?: string;
   };
   name?: string;
   userId?: string;
@@ -67,7 +67,7 @@ export function TrendingMemes() {
         address: token.address,
         title: token.metadata?.name || token.name || 'Unnamed Token',
         creator: token.userId ? `${token.userId.slice(0, 6)}...` : 'Anonymous',
-        image: token.image?.s3Key || token.metadata?.imageKey || defaultMeme,
+        image: token.image?.s3Key || token.metadata?.imageUrl || defaultMeme,
         marketCap: formatMarketCap(token.marketCap || 0),
         heat: token.heat || 0,
         change24h: token.change24h || 0,

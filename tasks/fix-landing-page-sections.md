@@ -77,7 +77,7 @@ interface Token {
     name: string;
     ticker: string;
     description: string;
-    imageKey: string;
+    imageUrl: string;
   }
 }
 ```
@@ -112,7 +112,7 @@ interface Token {
 - [ ] Map token data to MemeCard props:
   - [ ] Use `token.metadata.name` for title
   - [ ] Use shortened `token.userId` for creator
-  - [ ] Use `token.metadata.imageKey` for image (handle S3 URL if needed)
+  - [ ] Use `token.metadata.imageUrl` for image (handle S3 URL if needed)
   - [ ] Calculate or fetch real market cap
   - [ ] Calculate or fetch 24h change
 - [ ] Fix MemeCard component to use all passed props:
@@ -163,7 +163,7 @@ function formatNumber(num: number): string {
 ```
 
 ### Image Handling
-- Token images are stored as S3 keys in `metadata.imageKey`
+- Token images are stored as S3 keys in `metadata.imageUrl`
 - May need to construct full S3 URL
 - Fallback to `meme.png` if image fails to load
 
